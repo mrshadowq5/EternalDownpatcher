@@ -6,7 +6,6 @@ downpatch it quick!
 ![Preview](https://github.com/mrshadowq5/EternalDownpatcher/blob/main/assets/preview.png?raw=true)
 
 downpatch it quick!
->>>>>>> f03a3ad (Add preview images)
 
 ## Requirements
 
