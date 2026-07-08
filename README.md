@@ -5,8 +5,6 @@ downpatch it quick!
 
 ![Preview](https://github.com/mrshadowq5/EternalDownpatcher/blob/main/assets/preview.png?raw=true)
 
-downpatch it quick!
-
 ## Requirements
 
 * Windows 10/11
