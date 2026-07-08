@@ -2,6 +2,8 @@
 
 A Downpatcher for DOOM Eternal.
 
+downpatch it quick
+
 ## Requirements
 
 * Windows 10/11
