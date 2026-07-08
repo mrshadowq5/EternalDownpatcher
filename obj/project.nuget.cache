@@ -1,0 +1,13 @@
+{
+  "version": 2,
+  "dgSpecHash": "EGU/KPuJ/gc=",
+  "success": true,
+  "projectFilePath": "D:\\Programs\\csharptesting\\DEDownpatcher.WinForms\\DEDownpatcher.WinForms.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\mrshadowq5\\.nuget\\packages\\microsoft.net.illink.tasks\\10.0.9\\microsoft.net.illink.tasks.10.0.9.nupkg.sha512",
+    "C:\\Users\\mrshadowq5\\.nuget\\packages\\microsoft.netcore.app.runtime.win-x64\\10.0.9\\microsoft.netcore.app.runtime.win-x64.10.0.9.nupkg.sha512",
+    "C:\\Users\\mrshadowq5\\.nuget\\packages\\microsoft.windowsdesktop.app.runtime.win-x64\\10.0.9\\microsoft.windowsdesktop.app.runtime.win-x64.10.0.9.nupkg.sha512",
+    "C:\\Users\\mrshadowq5\\.nuget\\packages\\microsoft.aspnetcore.app.runtime.win-x64\\10.0.9\\microsoft.aspnetcore.app.runtime.win-x64.10.0.9.nupkg.sha512"
+  ],
+  "logs": []
+}
