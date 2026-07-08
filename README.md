@@ -1,10 +1,12 @@
 # EternalDownpatcher
-
 A Downpatcher for DOOM Eternal.
-
 
 downpatch it quick!
 
+![Preview](https://github.com/mrshadowq5/EternalDownpatcher/blob/main/assets/preview.png?raw=true)
+
+downpatch it quick!
+>>>>>>> f03a3ad (Add preview images)
 
 ## Requirements
 
@@ -18,6 +20,8 @@ You must own [DOOM Eternal](https://store.steampowered.com/app/782330/DOOM_Etern
 ## INSTRUCTIONS
 
 Instructions can be found in the application in the top right.
+
+![Preview](https://github.com/mrshadowq5/EternalDownpatcher/blob/main/assets/instructions.png?raw=true)
 
 ## Why this project exists
 
