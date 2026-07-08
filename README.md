@@ -31,4 +31,4 @@ I created EternalDownpatcher as a separate implementation after running into iss
 
 Xiae's Downpatcher has not been updated since 2023 and uses an older version of DepotDownloader [2.4.6](https://github.com/SteamRE/DepotDownloader/releases/tag/DepotDownloader_2.4.7), this causes InvalidPassword error and makes downpatching impossible.
 
-EternalDownpatcher is not meant to disrespect or replace any existing projects. It was made to solve practical issues I personally encountered and to make the downpatching process more reliable for my own use and for others who may run into the same problems.
+EternalDownpatcher is not meant to disrespect or replace any existing projects. It was made to solve practical issues I personally encountered and to make the downpatching process more reliable for my own use and for others who run into the same problems.
