@@ -7,6 +7,7 @@ namespace EternalDownpatcher.WinForms;
 public sealed class UserSettings
 {
     public bool DarkMode { get; set; }
+    public string Language { get; set; } = "en";
 }
 
 public static class UserSettingsStore
