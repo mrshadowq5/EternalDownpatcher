@@ -1,16 +1,33 @@
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.IO;
 using System.IO.Compression;
+using System.Linq;
+using System.Net.Http;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace EternalDownpatcher.WinForms;
 
 public sealed class MainForm : Form
 {
-private readonly UserSettings _userSettings;
-private bool _loadingTheme;
+    private readonly UserSettings _userSettings;
+
+    private readonly Button _themeToggleButton = new();
+    private readonly Button _settingsButton = new();
+
+    private readonly Label _titleLabel = new();
+    private readonly Label _subtitleLabel = new();
+    private readonly Label _versionLabel = new();
+    private readonly Label _usernameLabel = new();
+    private readonly Label _passwordLabel = new();
+    private readonly Label _consoleLabel = new();
 
     private readonly ComboBox _versionComboBox = new();
     private readonly TextBox _steamUsernameTextBox = new();
@@ -22,26 +39,27 @@ private bool _loadingTheme;
     private readonly Button _selectDownpatchFolderButton = new();
     private readonly Button _helpButton = new();
     private readonly Button _copyLogButton = new();
-    private readonly CheckBox _darkModeSwitch = new();
     private readonly CheckBox _downloadAllFilesCheckBox = new();
     private readonly CheckBox _validateFilesCheckBox = new();
     private readonly Label _gameFolderStatusLabel = new();
     private readonly Label _requiredFieldsLabel = new();
     private readonly RichTextBox _consoleBox = new();
 
-private readonly Label _folderLabel = new();
-private readonly Button _openOutputFolderButton = new();
-private readonly Button _restoreBackupButton = new();
+    private readonly Label _folderLabel = new();
+    private readonly Button _openOutputFolderButton = new();
+    private readonly Button _restoreBackupButton = new();
 
-private readonly System.Windows.Forms.Timer _themeTransitionTimer = new();
-private bool _isDarkTheme;
-private bool _targetDarkTheme;
-private int _themeTransitionFrame;
-private const int ThemeTransitionFrames = 16;
-private ThemePalette _themeTransitionFrom;
-private ThemePalette _themeTransitionTo;
+    private readonly System.Windows.Forms.Timer _themeTransitionTimer = new();
+    private bool _isDarkTheme;
+    private bool _targetDarkTheme;
+    private int _themeTransitionFrame;
+    private const int ThemeTransitionFrames = 16;
+    private ThemePalette _themeTransitionFrom;
+    private ThemePalette _themeTransitionTo;
 
-private readonly List<DownpatchVersion> _versions = [];
+    private Image? _settingsIconImage;
+
+    private readonly List<DownpatchVersion> _versions = [];
     private string? _doomRootFolder;
     private DownpatchVersion? _installedVersion;
 
@@ -60,66 +78,89 @@ private readonly List<DownpatchVersion> _versions = [];
         782339
     ];
 
-public MainForm()
-{
-    _userSettings = UserSettingsStore.Load();
+    public MainForm()
+    {
+        _userSettings = UserSettingsStore.Load();
 
-    Text = "EternalDownpatcher";
-        
+        Text = "EternalDownpatcher";
+
         StartPosition = FormStartPosition.CenterScreen;
         ClientSize = new Size(720, 455);
         MinimumSize = new Size(736, 494);
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
         Font = new Font("Segoe UI", 9F);
-        BackColor = SystemColors.Control;
 
         Icon? appIcon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
 
         if (appIcon is not null)
-    {
-        Icon = appIcon;
-    }
+        {
+            Icon = appIcon;
+        }
 
-BuildInterface();
-ConfigureThemeTransition();
+        BuildInterface();
+        ConfigureThemeTransition();
 
-        _loadingTheme = true;
-        _darkModeSwitch.Checked = _userSettings.DarkMode;
-        _loadingTheme = false;
+        _isDarkTheme = _userSettings.DarkMode;
 
+        ApplyLanguage();
         ApplyTheme(_userSettings.DarkMode);
         LoadVersions();
 
-        WriteLog("Welcome to EternalDownpatcher.");
-        WriteLog("Select a version manually.");
-        WriteLog("Select DOOM Eternal root folder.");
-        WriteLog($"Working folder: {GetAppWorkingFolder()}");
-        WriteLog($"Default patch files folder: {GetDefaultPatchFilesFolder()}");
-        WriteLog("Click Help button for instructions!");
+        WriteLog(L("WelcomeLog"));
+        WriteLog(LF("VersionLog", "1.2")); //EternalDownpatcher version
+        WriteLog(L("SelectVersionLog"));
+        WriteLog(L("SelectRootFolderLog"));
+        WriteLog(LF("WorkingFolderLog", GetAppWorkingFolder()));
+        WriteLog(LF("DefaultPatchFolderLog", GetDefaultPatchFilesFolder()));
+        WriteLog(L("ClickHelpLog"));
 
-        ActiveControl = _versionComboBox;
+        Shown += (_, _) => ActiveControl = _startButton;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _settingsIconImage?.Dispose();
+            _operationCancellation?.Dispose();
+        }
+
+        base.Dispose(disposing);
     }
 
     private void BuildInterface()
     {
-        Label titleLabel = new()
+        _titleLabel.Text = "EternalDownpatcher";
+        _titleLabel.AutoSize = false;
+        _titleLabel.Font = new Font("Segoe UI", 11F, FontStyle.Italic);
+        _titleLabel.SetBounds(12, 8, 260, 22);
+
+        _subtitleLabel.Text = "";
+        _subtitleLabel.AutoSize = false;
+        _subtitleLabel.ForeColor = Color.DimGray;
+        _subtitleLabel.SetBounds(12, 30, 260, 18);
+
+        _themeToggleButton.SetBounds(626, 10, 34, 28);
+        _themeToggleButton.Font = new Font("Segoe UI Symbol", 10F);
+        _themeToggleButton.Text = "☀";
+        _themeToggleButton.Click += ThemeToggleButton_Click;
+
+        _settingsButton.SetBounds(672, 10, 34, 28);
+        _settingsButton.Text = "";
+        _settingsButton.ImageAlign = ContentAlignment.MiddleCenter;
+        _settingsButton.Click += SettingsButton_Click;
+
+        try
         {
-            Text = "EternalDownpatcher",
-            AutoSize = false,
-            Font = new Font("Segoe UI", 11F, FontStyle.Italic)
-        };
-
-        titleLabel.SetBounds(12, 8, 260, 22);
-
-        Label subtitleLabel = new()
+            _settingsIconImage = LoadButtonImage("settings.png", 16);
+            _settingsButton.Image = _settingsIconImage;
+        }
+        catch
         {
-            Text = "",
-            AutoSize = false,
-            ForeColor = Color.DimGray
-        };
-
-        subtitleLabel.SetBounds(12, 30, 260, 18);
+            _settingsButton.Text = "⚙";
+            _settingsButton.Font = new Font("Segoe UI Symbol", 10F);
+        }
 
         _gameFolderStatusLabel.SetBounds(12, 55, 455, 22);
         _gameFolderStatusLabel.Text = "DOOM Eternal root folder has not been selected.";
@@ -134,14 +175,20 @@ ConfigureThemeTransition();
         _helpButton.Text = "Help";
         _helpButton.Click += HelpButton_Click;
 
-        Label versionLabel = CreateRequiredLabel("Game Version");
-        versionLabel.SetBounds(12, 92, 140, 20);
+        _versionLabel.Text = "Game Version *";
+        _versionLabel.AutoSize = false;
+        _versionLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        _versionLabel.SetBounds(12, 92, 140, 20);
 
-        Label usernameLabel = CreateRequiredLabel("Steam Username");
-        usernameLabel.SetBounds(160, 92, 160, 20);
+        _usernameLabel.Text = "Steam Username *";
+        _usernameLabel.AutoSize = false;
+        _usernameLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        _usernameLabel.SetBounds(160, 92, 160, 20);
 
-        Label passwordLabel = CreateRequiredLabel("Steam Password");
-        passwordLabel.SetBounds(330, 92, 160, 20);
+        _passwordLabel.Text = "Steam Password *";
+        _passwordLabel.AutoSize = false;
+        _passwordLabel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+        _passwordLabel.SetBounds(330, 92, 160, 20);
 
         _versionComboBox.SetBounds(12, 114, 140, 25);
         _versionComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
@@ -185,13 +232,9 @@ ConfigureThemeTransition();
         _validateFilesCheckBox.Text = "Validate files";
         _validateFilesCheckBox.Checked = true;
 
-        Label consoleLabel = new()
-        {
-            Text = "Output Log",
-            Font = new Font(Font, FontStyle.Bold)
-        };
-
-        consoleLabel.SetBounds(12, 261, 120, 20);
+        _consoleLabel.Text = "Output Log";
+        _consoleLabel.Font = new Font(Font, FontStyle.Bold);
+        _consoleLabel.SetBounds(12, 261, 120, 20);
 
         _copyLogButton.SetBounds(610, 256, 98, 27);
         _copyLogButton.Text = "Copy Log";
@@ -205,11 +248,6 @@ ConfigureThemeTransition();
         _consoleBox.BorderStyle = BorderStyle.FixedSingle;
         _consoleBox.ScrollBars = RichTextBoxScrollBars.Vertical;
 
-        _darkModeSwitch.SetBounds(610, 421, 100, 24);
-        _darkModeSwitch.Text = "Dark mode";
-        _darkModeSwitch.AutoSize = true;
-        _darkModeSwitch.CheckedChanged += DarkModeSwitch_CheckedChanged;
-
         _restoreBackupButton.SetBounds(365, 421, 125, 24);
         _restoreBackupButton.Text = "Restore Backup";
         _restoreBackupButton.Click += RestoreBackupButton_Click;
@@ -218,14 +256,16 @@ ConfigureThemeTransition();
         _openOutputFolderButton.Text = "Open Folder";
         _openOutputFolderButton.Click += OpenOutputFolderButton_Click;
 
-        Controls.Add(titleLabel);
-        Controls.Add(subtitleLabel);
+        Controls.Add(_titleLabel);
+        Controls.Add(_subtitleLabel);
+        Controls.Add(_themeToggleButton);
+        Controls.Add(_settingsButton);
         Controls.Add(_gameFolderStatusLabel);
         Controls.Add(_selectGameFolderButton);
         Controls.Add(_helpButton);
-        Controls.Add(versionLabel);
-        Controls.Add(usernameLabel);
-        Controls.Add(passwordLabel);
+        Controls.Add(_versionLabel);
+        Controls.Add(_usernameLabel);
+        Controls.Add(_passwordLabel);
         Controls.Add(_versionComboBox);
         Controls.Add(_steamUsernameTextBox);
         Controls.Add(_steamPasswordTextBox);
@@ -237,132 +277,139 @@ ConfigureThemeTransition();
         Controls.Add(_cancelButton);
         Controls.Add(_downloadAllFilesCheckBox);
         Controls.Add(_validateFilesCheckBox);
-        Controls.Add(consoleLabel);
+        Controls.Add(_consoleLabel);
         Controls.Add(_copyLogButton);
         Controls.Add(_consoleBox);
-        Controls.Add(_darkModeSwitch);
         Controls.Add(_restoreBackupButton);
         Controls.Add(_openOutputFolderButton);
     }
 
-private void OpenOutputFolderButton_Click(object? sender, EventArgs e)
-{
-    string folder = _downpatchFolderTextBox.Text.Trim();
-
-    if (string.IsNullOrWhiteSpace(folder))
+    private static Image LoadButtonImage(string fileName, int size)
     {
-        return;
+        string path = Path.Combine(GetAppWorkingFolder(), "assets", fileName);
+
+        using Image source = Image.FromFile(path);
+
+        Bitmap bitmap = new(size, size);
+
+        using Graphics graphics = Graphics.FromImage(bitmap);
+        graphics.InterpolationMode = InterpolationMode.HighQualityBicubic;
+        graphics.SmoothingMode = SmoothingMode.AntiAlias;
+        graphics.PixelOffsetMode = PixelOffsetMode.HighQuality;
+        graphics.Clear(Color.Transparent);
+        graphics.DrawImage(source, new Rectangle(0, 0, size, size));
+
+        return bitmap;
     }
 
-    if (!Directory.Exists(folder))
+    private void OpenOutputFolderButton_Click(object? sender, EventArgs e)
     {
-        ShowError("Output folder does not exist.");
-        return;
-    }
+        string folder = _downpatchFolderTextBox.Text.Trim();
 
-    Process.Start(new ProcessStartInfo
-    {
-        FileName = folder,
-        UseShellExecute = true
-    });
-}
-
-private void RestoreBackupButton_Click(object? sender, EventArgs e)
-{
-    if (_isRunning)
-    {
-        return;
-    }
-
-    string? targetFolder = _doomRootFolder;
-
-    if (string.IsNullOrWhiteSpace(targetFolder) ||
-        !IsValidDoomRootFolder(targetFolder))
-    {
-        using FolderBrowserDialog targetDialog = new()
+        if (string.IsNullOrWhiteSpace(folder))
         {
-            Description = "Select DOOM Eternal root folder to restore backup into",
-            UseDescriptionForTitle = true
+            return;
+        }
+
+        if (!Directory.Exists(folder))
+        {
+            ShowErrorKey("OutputFolderDoesNotExist");
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo
+        {
+            FileName = folder,
+            UseShellExecute = true
+        });
+    }
+
+    private void RestoreBackupButton_Click(object? sender, EventArgs e)
+    {
+        if (_isRunning)
+        {
+            return;
+        }
+
+        string? targetFolder = _doomRootFolder;
+
+        if (string.IsNullOrWhiteSpace(targetFolder) ||
+            !IsValidDoomRootFolder(targetFolder))
+        {
+            using FolderBrowserDialog targetDialog = new()
+            {
+                Description = "Select DOOM Eternal root folder to restore backup into",
+                UseDescriptionForTitle = true
+            };
+
+            if (targetDialog.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            targetFolder = Path.GetFullPath(targetDialog.SelectedPath);
+
+            if (!IsValidDoomRootFolder(targetFolder))
+            {
+                ShowErrorKey("SelectedTargetFolderInvalid");
+                return;
+            }
+        }
+
+        using FolderBrowserDialog backupDialog = new()
+        {
+            Description = "Select EternalDownpatcher backup folder",
+            UseDescriptionForTitle = true,
+            InitialDirectory = targetFolder
         };
 
-        if (targetDialog.ShowDialog(this) != DialogResult.OK)
+        if (backupDialog.ShowDialog(this) != DialogResult.OK)
         {
             return;
         }
 
-        targetFolder = Path.GetFullPath(targetDialog.SelectedPath);
+        string backupFolder = Path.GetFullPath(backupDialog.SelectedPath);
 
-        if (!IsValidDoomRootFolder(targetFolder))
+        if (!Directory.Exists(backupFolder) ||
+            !Directory.EnumerateFileSystemEntries(backupFolder).Any())
         {
-            ShowError("Selected target folder is not a valid DOOM Eternal root folder.");
+            ShowErrorKey("BackupFolderInvalid");
             return;
         }
-    }
 
-    using FolderBrowserDialog backupDialog = new()
-    {
-        Description = "Select EternalDownpatcher backup folder",
-        UseDescriptionForTitle = true,
-        InitialDirectory = targetFolder
-    };
-
-    if (backupDialog.ShowDialog(this) != DialogResult.OK)
-    {
-        return;
-    }
-
-    string backupFolder = Path.GetFullPath(backupDialog.SelectedPath);
-
-    if (!Directory.Exists(backupFolder) ||
-        !Directory.EnumerateFileSystemEntries(backupFolder).Any())
-    {
-        ShowError("Selected backup folder is empty or invalid.");
-        return;
-    }
-
-    DialogResult result = MessageBox.Show(
-        this,
-        $"Restore this backup into DOOM Eternal folder?\n\nBackup:\n{backupFolder}\n\nTarget:\n{targetFolder}",
-        "Restore backup",
-        MessageBoxButtons.YesNo,
-        MessageBoxIcon.Warning);
-
-    if (result != DialogResult.Yes)
-    {
-        WriteLog("Restore backup cancelled.");
-        return;
-    }
-
-    try
-    {
-        WriteLog($"Restoring backup: {backupFolder}");
-        WriteLog($"Restore target: {targetFolder}");
-
-        CopyDirectory(backupFolder, targetFolder);
-
-        WriteLog("Backup restored successfully.");
-
-        MessageBox.Show(
+        DialogResult result = MessageBox.Show(
             this,
-            "Backup restored successfully.",
-            "EternalDownpatcher",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
-    }
-    catch (Exception exception)
-    {
-        ShowError($"Failed to restore backup: {exception.Message}");
-    }
-}
+            $"Restore this backup into DOOM Eternal folder?\n\nBackup:\n{backupFolder}\n\nTarget:\n{targetFolder}",
+            "Restore backup",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning);
 
-    private static Label CreateRequiredLabel(string text)
-    {
-        return new Label
+        if (result != DialogResult.Yes)
         {
-            Text = text + " *",
-            AutoSize = false,
-            Font = new Font("Segoe UI", 9F, FontStyle.Bold)
-        };
+            WriteLog("Restore backup cancelled.");
+            return;
+        }
+
+        try
+        {
+            WriteLog($"Restoring backup: {backupFolder}");
+            WriteLog($"Restore target: {targetFolder}");
+
+            CopyDirectory(backupFolder, targetFolder);
+
+            WriteLog("Backup restored successfully.");
+
+            MessageBox.Show(
+                this,
+                "Backup restored successfully.",
+                "EternalDownpatcher",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+        catch (Exception exception)
+        {
+            ShowErrorKey("RestoreBackupFailed", exception.Message);
+        }
     }
 
     private static string GetAppWorkingFolder()
@@ -389,7 +436,7 @@ private void RestoreBackupButton_Click(object? sender, EventArgs e)
 
         if (versionsJsonPath is null)
         {
-            ShowError("data\\versions.json was not found.");
+            ShowErrorKey("VersionsJsonNotFound");
             return;
         }
 
@@ -405,14 +452,31 @@ private void RestoreBackupButton_Click(object? sender, EventArgs e)
             }
 
             RefreshDownpatchVersions();
+            EnsureDefaultVersionSelection();
 
-            WriteLog($"Loaded versions: {_versions.Count}");
-            WriteLog($"Versions source: {versionsJsonPath}");
+            WriteLog(LF("LoadedVersionsLog", _versions.Count));
+            WriteLog(LF("VersionsSourceLog", versionsJsonPath));
         }
         catch (Exception exception)
         {
-            ShowError($"Failed to load versions.json: {exception.Message}");
+            ShowErrorKey("LoadVersionsFailed", exception.Message);
         }
+    }
+
+    private void EnsureDefaultVersionSelection()
+    {
+        if (_versionComboBox.Items.Count <= 0)
+        {
+            _versionComboBox.SelectedIndex = -1;
+            return;
+        }
+
+        if (_versionComboBox.SelectedIndex >= 0)
+        {
+            return;
+        }
+
+        _versionComboBox.SelectedIndex = 0;
     }
 
     private static string? FindVersionsJsonPath()
@@ -489,7 +553,7 @@ private void RestoreBackupButton_Click(object? sender, EventArgs e)
 
                     if (!string.IsNullOrWhiteSpace(manifestId))
                     {
-                        manifestIds.Add(manifestId);
+                        manifestIds.Add(manifestId.Trim());
                     }
                 }
                 else if (manifestIdElement.ValueKind == JsonValueKind.Number)
@@ -507,8 +571,8 @@ private void RestoreBackupButton_Click(object? sender, EventArgs e)
 
             versions.Add(
                 new DownpatchVersion(
-                    name,
-                    size,
+                    name.Trim(),
+                    size.Trim(),
                     manifestIds.ToArray()));
         }
 
@@ -520,17 +584,44 @@ private void RestoreBackupButton_Click(object? sender, EventArgs e)
         return versions;
     }
 
-private void RefreshDownpatchVersions()
-{
-    string? selectedBefore = _versionComboBox.SelectedItem?.ToString();
-
-    _versionComboBox.Items.Clear();
-
-    if (_installedVersion is null || _downloadAllFilesCheckBox.Checked)
+    private void RefreshDownpatchVersions()
     {
-        foreach (DownpatchVersion version in _versions)
+        string? selectedBefore = _versionComboBox.SelectedItem?.ToString();
+
+        _versionComboBox.Items.Clear();
+
+        if (_installedVersion is null || _downloadAllFilesCheckBox.Checked)
         {
-            _versionComboBox.Items.Add(version.Name);
+            foreach (DownpatchVersion version in _versions)
+            {
+                _versionComboBox.Items.Add(version.Name);
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedBefore) &&
+                _versionComboBox.Items.Contains(selectedBefore))
+            {
+                _versionComboBox.SelectedItem = selectedBefore;
+            }
+            else
+            {
+                EnsureDefaultVersionSelection();
+            }
+
+            return;
+        }
+
+        int installedIndex = GetVersionIndex(_installedVersion.Name);
+
+        if (installedIndex <= 0)
+        {
+            _versionComboBox.SelectedIndex = -1;
+            WriteLog("No older downpatch versions are available.");
+            return;
+        }
+
+        for (int i = 0; i < installedIndex; i++)
+        {
+            _versionComboBox.Items.Add(_versions[i].Name);
         }
 
         if (!string.IsNullOrWhiteSpace(selectedBefore) &&
@@ -540,240 +631,213 @@ private void RefreshDownpatchVersions()
         }
         else
         {
-            _versionComboBox.SelectedIndex = -1;
+            EnsureDefaultVersionSelection();
         }
 
-        return;
+        WriteLog($"Detected installed version: {_installedVersion.Name}");
+        WriteLog($"Available downpatch versions: {_versionComboBox.Items.Count}");
     }
 
-    int installedIndex = GetVersionIndex(_installedVersion.Name);
-
-    if (installedIndex <= 0)
+    private int GetVersionIndex(string versionName)
     {
-        _versionComboBox.SelectedIndex = -1;
-        WriteLog("No older downpatch versions are available.");
-        return;
+        return _versions.FindIndex(
+            version => string.Equals(
+                version.Name,
+                versionName,
+                StringComparison.OrdinalIgnoreCase));
     }
 
-    for (int i = 0; i < installedIndex; i++)
+    private DownpatchVersion? DetectInstalledVersion(string doomRootFolder)
     {
-        _versionComboBox.Items.Add(_versions[i].Name);
-    }
+        string exePath = Path.Combine(doomRootFolder, "DOOMEternalx64vk.exe");
 
-    if (!string.IsNullOrWhiteSpace(selectedBefore) &&
-        _versionComboBox.Items.Contains(selectedBefore))
-    {
-        _versionComboBox.SelectedItem = selectedBefore;
-    }
-    else
-    {
-        _versionComboBox.SelectedIndex = -1;
-    }
+        if (!File.Exists(exePath))
+        {
+            return null;
+        }
 
-    WriteLog($"Detected installed version: {_installedVersion.Name}");
-    WriteLog($"Available downpatch versions: {_versionComboBox.Items.Count}");
-}
+        long exeSize = new FileInfo(exePath).Length;
 
-private int GetVersionIndex(string versionName)
-{
-    return _versions.FindIndex(
-        version => string.Equals(
-            version.Name,
-            versionName,
-            StringComparison.OrdinalIgnoreCase));
-}
+        foreach (DownpatchVersion version in _versions)
+        {
+            if (!long.TryParse(version.Size.Trim(), out long versionSize))
+            {
+                continue;
+            }
 
-private DownpatchVersion? DetectInstalledVersion(string doomRootFolder)
-{
-    string exePath = Path.Combine(doomRootFolder, "DOOMEternalx64vk.exe");
+            if (versionSize == exeSize)
+            {
+                return version;
+            }
+        }
 
-    if (!File.Exists(exePath))
-    {
         return null;
     }
 
-    long exeSize = new FileInfo(exePath).Length;
-
-    foreach (DownpatchVersion version in _versions)
+    private string BuildGeneratedFileListPath(DownpatchVersion targetVersion)
     {
-        if (!long.TryParse(version.Size.Trim(), out long versionSize))
+        if (_installedVersion is null)
         {
-            continue;
+            throw new InvalidOperationException(L("InstalledVersionNotDetected"));
         }
 
-        if (versionSize == exeSize)
+        int targetIndex = GetVersionIndex(targetVersion.Name);
+        int installedIndex = GetVersionIndex(_installedVersion.Name);
+
+        if (targetIndex < 0)
         {
-            return version;
-        }
-    }
-
-    return null;
-}
-
-private string BuildGeneratedFileListPath(DownpatchVersion targetVersion)
-{
-    if (_installedVersion is null)
-    {
-        throw new InvalidOperationException("Installed version was not detected.");
-    }
-
-    int targetIndex = GetVersionIndex(targetVersion.Name);
-    int installedIndex = GetVersionIndex(_installedVersion.Name);
-
-    if (targetIndex < 0)
-    {
-        throw new InvalidOperationException("Target version was not found in versions list.");
-    }
-
-    if (installedIndex < 0)
-    {
-        throw new InvalidOperationException("Installed version was not found in versions list.");
-    }
-
-    if (targetIndex >= installedIndex)
-    {
-        throw new InvalidOperationException("Target version must be older than installed version.");
-    }
-
-    HashSet<string> aggregatedFiles = new(StringComparer.OrdinalIgnoreCase);
-    List<string> includedFileLists = [];
-
-    WriteLog($"Target version: {targetVersion.Name}");
-    WriteLog($"Installed version: {_installedVersion.Name}");
-
-    if (string.Equals(targetVersion.Name, "1.0", StringComparison.OrdinalIgnoreCase) &&
-        FindRawFileListPath("1.1.0") is not null)
-    {
-        includedFileLists.Add("1.1.0");
-    }
-
-    for (int i = targetIndex + 1; i <= installedIndex; i++)
-    {
-        includedFileLists.Add(_versions[i].Name);
-    }
-
-    WriteLog("Included filelists:");
-
-    foreach (string intermediateName in includedFileLists)
-    {
-        string? fileListPath = FindRawFileListPath(intermediateName);
-
-        if (fileListPath is null)
-        {
-            throw new InvalidOperationException(
-                $"Filelist for intermediate version {intermediateName} was not found.");
+            throw new InvalidOperationException("Target version was not found in versions list.");
         }
 
-        int addedFromThisFile = 0;
-
-        foreach (string file in ReadFileListEntries(fileListPath))
+        if (installedIndex < 0)
         {
-            if (aggregatedFiles.Add(file))
+            throw new InvalidOperationException("Installed version was not found in versions list.");
+        }
+
+        if (targetIndex >= installedIndex)
+        {
+            throw new InvalidOperationException(L("TargetMustBeOlder"));
+        }
+
+        HashSet<string> aggregatedFiles = new(StringComparer.OrdinalIgnoreCase);
+        List<string> includedFileLists = [];
+
+        WriteLog($"Target version: {targetVersion.Name}");
+        WriteLog($"Installed version: {_installedVersion.Name}");
+
+        if (string.Equals(targetVersion.Name, "1.0", StringComparison.OrdinalIgnoreCase) &&
+            FindRawFileListPath("1.1.0") is not null)
+        {
+            includedFileLists.Add("1.1.0");
+        }
+
+        for (int i = targetIndex + 1; i <= installedIndex; i++)
+        {
+            includedFileLists.Add(_versions[i].Name);
+        }
+
+        WriteLog("Included filelists:");
+
+        foreach (string intermediateName in includedFileLists)
+        {
+            string? fileListPath = FindRawFileListPath(intermediateName);
+
+            if (fileListPath is null)
             {
-                addedFromThisFile++;
+                throw new InvalidOperationException(
+                    $"Filelist for intermediate version {intermediateName} was not found.");
             }
-        }
 
-        WriteLog($"- {intermediateName}: {addedFromThisFile} new entries");
-    }
+            int addedFromThisFile = 0;
 
-    if (aggregatedFiles.Count == 0)
-    {
-        throw new InvalidOperationException("Generated filelist is empty.");
-    }
-
-    string generatedFileListPath = Path.Combine(
-        GetAppWorkingFolder(),
-        "filelist.txt");
-
-    using StreamWriter writer = new(generatedFileListPath, false);
-
-    foreach (string file in aggregatedFiles.OrderBy(file => file, StringComparer.OrdinalIgnoreCase))
-    {
-        writer.WriteLine("regex:" + Regex.Escape(file));
-    }
-
-    WriteLog($"Generated filelist: {generatedFileListPath}");
-    WriteLog($"Generated filelist entries: {aggregatedFiles.Count}");
-
-    return generatedFileListPath;
-}
-
-private static IEnumerable<string> ReadFileListEntries(string fileListPath)
-{
-    string text = File.ReadAllText(fileListPath);
-
-    string[] entries = text.Split(
-        [' ', '\r', '\n', '\t'],
-        StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-    foreach (string entry in entries)
-    {
-        string file = entry.Trim();
-
-        if (string.IsNullOrWhiteSpace(file))
-        {
-            continue;
-        }
-
-        if (file.StartsWith("regex:", StringComparison.OrdinalIgnoreCase))
-        {
-            file = file["regex:".Length..];
-        }
-
-        yield return file;
-    }
-}
-
-private static string? FindRawFileListPath(string versionName)
-{
-    string root = GetAppWorkingFolder();
-
-    string[] dataFolders =
-    [
-        Path.Combine(root, "data"),
-        Path.Combine(AppContext.BaseDirectory, "data")
-    ];
-
-    string[] wantedNames =
-    [
-        versionName,
-        versionName + ".txt"
-    ];
-
-    foreach (string dataFolder in dataFolders)
-    {
-        if (!Directory.Exists(dataFolder))
-        {
-            continue;
-        }
-
-        foreach (string wantedName in wantedNames)
-        {
-            string directPath = Path.Combine(dataFolder, wantedName);
-
-            if (File.Exists(directPath))
+            foreach (string file in ReadFileListEntries(fileListPath))
             {
-                return Path.GetFullPath(directPath);
+                if (aggregatedFiles.Add(file))
+                {
+                    addedFromThisFile++;
+                }
             }
+
+            WriteLog($"- {intermediateName}: {addedFromThisFile} new entries");
         }
 
-        foreach (string file in Directory.EnumerateFiles(dataFolder))
+        if (aggregatedFiles.Count == 0)
         {
-            string fileName = Path.GetFileName(file);
+            throw new InvalidOperationException("Generated filelist is empty.");
+        }
+
+        string generatedFileListPath = Path.Combine(
+            GetAppWorkingFolder(),
+            "filelist.txt");
+
+        using StreamWriter writer = new(generatedFileListPath, false);
+
+        foreach (string file in aggregatedFiles.OrderBy(file => file, StringComparer.OrdinalIgnoreCase))
+        {
+            writer.WriteLine("regex:" + Regex.Escape(file));
+        }
+
+        WriteLog($"Generated filelist: {generatedFileListPath}");
+        WriteLog($"Generated filelist entries: {aggregatedFiles.Count}");
+
+        return generatedFileListPath;
+    }
+
+    private static IEnumerable<string> ReadFileListEntries(string fileListPath)
+    {
+        string text = File.ReadAllText(fileListPath);
+
+        string[] entries = text.Split(
+            [' ', '\r', '\n', '\t'],
+            StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        foreach (string entry in entries)
+        {
+            string file = entry.Trim();
+
+            if (string.IsNullOrWhiteSpace(file))
+            {
+                continue;
+            }
+
+            if (file.StartsWith("regex:", StringComparison.OrdinalIgnoreCase))
+            {
+                file = file["regex:".Length..];
+            }
+
+            yield return file;
+        }
+    }
+
+    private static string? FindRawFileListPath(string versionName)
+    {
+        string root = GetAppWorkingFolder();
+
+        string[] dataFolders =
+        [
+            Path.Combine(root, "data"),
+            Path.Combine(AppContext.BaseDirectory, "data")
+        ];
+
+        string[] wantedNames =
+        [
+            versionName,
+            versionName + ".txt"
+        ];
+
+        foreach (string dataFolder in dataFolders)
+        {
+            if (!Directory.Exists(dataFolder))
+            {
+                continue;
+            }
 
             foreach (string wantedName in wantedNames)
             {
-                if (string.Equals(fileName, wantedName, StringComparison.OrdinalIgnoreCase))
+                string directPath = Path.Combine(dataFolder, wantedName);
+
+                if (File.Exists(directPath))
                 {
-                    return Path.GetFullPath(file);
+                    return Path.GetFullPath(directPath);
+                }
+            }
+
+            foreach (string file in Directory.EnumerateFiles(dataFolder))
+            {
+                string fileName = Path.GetFileName(file);
+
+                foreach (string wantedName in wantedNames)
+                {
+                    if (string.Equals(fileName, wantedName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return Path.GetFullPath(file);
+                    }
                 }
             }
         }
-    }
 
-    return null;
-}
+        return null;
+    }
 
     private static string? GetStringProperty(
         JsonElement element,
@@ -830,399 +894,349 @@ private static string? FindRawFileListPath(string versionName)
                 StringComparison.OrdinalIgnoreCase));
     }
 
-private static string? FindFileListPath(DownpatchVersion version)
-{
-    string root = GetAppWorkingFolder();
-
-    string[] dataFolders =
-    [
-        Path.Combine(root, "data"),
-        Path.Combine(AppContext.BaseDirectory, "data")
-    ];
-
-    string[] wantedNames =
-    [
-        version.Name,
-        version.Name + ".txt"
-    ];
-
-    foreach (string dataFolder in dataFolders)
+    private async void StartButton_Click(object? sender, EventArgs e)
     {
-        if (!Directory.Exists(dataFolder))
+        if (_isRunning)
         {
-            continue;
+            return;
         }
 
-        foreach (string wantedName in wantedNames)
-        {
-            string directPath = Path.Combine(dataFolder, wantedName);
+        bool downloadAllFiles = _downloadAllFilesCheckBox.Checked;
 
-            if (File.Exists(directPath))
+        List<string> missingFields = [];
+
+        if (_versionComboBox.SelectedItem is null)
+        {
+            missingFields.Add(L("MissingGameVersion"));
+        }
+
+        if (string.IsNullOrWhiteSpace(_steamUsernameTextBox.Text))
+        {
+            missingFields.Add(L("MissingSteamLogin"));
+        }
+
+        if (string.IsNullOrWhiteSpace(_steamPasswordTextBox.Text))
+        {
+            missingFields.Add(L("MissingSteamPassword"));
+        }
+
+        if (!downloadAllFiles && string.IsNullOrWhiteSpace(_doomRootFolder))
+        {
+            missingFields.Add(L("MissingDoomRoot"));
+        }
+
+        if (string.IsNullOrWhiteSpace(_downpatchFolderTextBox.Text))
+        {
+            missingFields.Add(downloadAllFiles ? L("MissingDownloadFolder") : L("MissingPatchFolder"));
+        }
+
+        if (missingFields.Count > 0)
+        {
+            _requiredFieldsLabel.Text = LF("MissingPrefix", string.Join(", ", missingFields));
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+            WriteLog($"ERROR: {L("RequiredFieldsLog")}");
+            return;
+        }
+
+        DownpatchVersion? selectedVersion = GetSelectedVersion();
+
+        if (selectedVersion is null)
+        {
+            ShowErrorKey("SelectedVersionInvalid");
+            return;
+        }
+
+        if (selectedVersion.ManifestIds.Length != DepotIds.Length)
+        {
+            ShowErrorKey("InvalidManifestData");
+            return;
+        }
+
+        string? fileListPath = null;
+
+        if (!downloadAllFiles)
+        {
+            if (_installedVersion is null)
             {
-                return Path.GetFullPath(directPath);
+                ShowErrorKey("InstalledVersionNotDetected");
+                return;
+            }
+
+            int targetIndex = GetVersionIndex(selectedVersion.Name);
+            int installedIndex = GetVersionIndex(_installedVersion.Name);
+
+            if (targetIndex < 0 || installedIndex < 0)
+            {
+                ShowErrorKey("UnableCompareVersions");
+                return;
+            }
+
+            if (targetIndex >= installedIndex)
+            {
+                ShowErrorKey("TargetMustBeOlder");
+                return;
+            }
+
+            try
+            {
+                fileListPath = BuildGeneratedFileListPath(selectedVersion);
+            }
+            catch (Exception exception)
+            {
+                ShowErrorKey("GenerateFilelistFailed", exception.Message);
+                return;
             }
         }
 
-        foreach (string file in Directory.EnumerateFiles(dataFolder))
-        {
-            string fileName = Path.GetFileName(file);
+        string? existingDepotDownloaderPath = FindDepotDownloaderPath();
 
-            foreach (string wantedName in wantedNames)
+        if (existingDepotDownloaderPath is null)
+        {
+            DialogResult downloadDepotResult = MessageBox.Show(
+            this,
+            L("DepotDownloaderNotFoundQuestion"),
+            L("DownloadDepotDownloaderTitle"),
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Question);
+
+            if (downloadDepotResult != DialogResult.Yes)
             {
-                if (string.Equals(fileName, wantedName, StringComparison.OrdinalIgnoreCase))
-                {
-                    return Path.GetFullPath(file);
-                }
+                WriteLog("Operation cancelled. DepotDownloader was not downloaded.");
+                return;
             }
         }
-    }
 
-    return null;
-}
-
-private async void StartButton_Click(object? sender, EventArgs e)
-{
-    if (_isRunning)
-    {
-        return;
-    }
-
-    bool downloadAllFiles = _downloadAllFilesCheckBox.Checked;
-
-    List<string> missingFields = [];
-
-    if (_versionComboBox.SelectedItem is null)
-    {
-        missingFields.Add("game version");
-    }
-
-    if (string.IsNullOrWhiteSpace(_steamUsernameTextBox.Text))
-    {
-        missingFields.Add("Steam login");
-    }
-
-    if (string.IsNullOrWhiteSpace(_steamPasswordTextBox.Text))
-    {
-        missingFields.Add("Steam password");
-    }
-
-    if (!downloadAllFiles && string.IsNullOrWhiteSpace(_doomRootFolder))
-    {
-        missingFields.Add("DOOM Eternal root folder");
-    }
-
-    if (string.IsNullOrWhiteSpace(_downpatchFolderTextBox.Text))
-    {
-        missingFields.Add(downloadAllFiles ? "download folder" : "patch files folder");
-    }
-
-    if (missingFields.Count > 0)
-    {
-        _requiredFieldsLabel.Text = "* Missing: " + string.Join(", ", missingFields);
-        _requiredFieldsLabel.ForeColor = Color.Red;
-        WriteLog("ERROR: Complete all required fields before starting.");
-        return;
-    }
-
-    DownpatchVersion? selectedVersion = GetSelectedVersion();
-
-    if (selectedVersion is null)
-    {
-        ShowError("Selected version is invalid.");
-        return;
-    }
-
-    if (selectedVersion.ManifestIds.Length != DepotIds.Length)
-    {
-        ShowError("Selected version has invalid manifest data.");
-        return;
-    }
-
-    string? fileListPath = null;
-
-    if (!downloadAllFiles)
-    {
-        if (_installedVersion is null)
-        {
-            ShowError("Installed DOOM Eternal version was not detected.");
-            return;
-        }
-
-        int targetIndex = GetVersionIndex(selectedVersion.Name);
-        int installedIndex = GetVersionIndex(_installedVersion.Name);
-
-        if (targetIndex < 0 || installedIndex < 0)
-        {
-            ShowError("Unable to compare selected and installed versions.");
-            return;
-        }
-
-        if (targetIndex >= installedIndex)
-        {
-            ShowError("Selected downpatch version must be older than the installed version.");
-            return;
-        }
+        string depotDownloaderPath;
 
         try
         {
-            fileListPath = BuildGeneratedFileListPath(selectedVersion);
+            depotDownloaderPath = await FindOrDownloadDepotDownloaderAsync();
+            WriteLog($"DepotDownloader ready: {depotDownloaderPath}");
         }
         catch (Exception exception)
         {
-            ShowError($"Failed to generate filelist: {exception.Message}");
-            return;
-        }
-    }
-
-    string? existingDepotDownloaderPath = FindDepotDownloaderPath();
-
-    if (existingDepotDownloaderPath is null)
-    {
-        DialogResult downloadDepotResult = MessageBox.Show(
-            this,
-            "DepotDownloader.exe was not found.\n\nDownload the latest version automatically?",
-            "Download DepotDownloader",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-
-        if (downloadDepotResult != DialogResult.Yes)
-        {
-            WriteLog("Operation cancelled. DepotDownloader was not downloaded.");
-            return;
-        }
-    }
-
-    string depotDownloaderPath;
-
-    try
-    {
-        depotDownloaderPath = await FindOrDownloadDepotDownloaderAsync();
-        WriteLog($"DepotDownloader ready: {depotDownloaderPath}");
-    }
-    catch (Exception exception)
-    {
-        ShowError($"Failed to prepare DepotDownloader: {exception.Message}");
-        return;
-    }
-
-    string outputFolder = Path.GetFullPath(_downpatchFolderTextBox.Text.Trim());
-    string? doomRootFolder = null;
-
-    if (!downloadAllFiles)
-    {
-        doomRootFolder = Path.GetFullPath(_doomRootFolder!);
-
-        if (!IsValidDoomRootFolder(doomRootFolder))
-        {
-            ShowError("Selected DOOM Eternal root folder is invalid. It must contain DOOMEternalx64vk.exe.");
+            ShowErrorKey("DepotDownloaderPrepareFailed", exception.Message);
             return;
         }
 
-        if (AreSameDirectory(outputFolder, doomRootFolder))
+        string outputFolder = Path.GetFullPath(_downpatchFolderTextBox.Text.Trim());
+        string? doomRootFolder = null;
+
+        if (!downloadAllFiles)
         {
-            ShowError("Patch files folder and DOOM Eternal folder cannot be the same folder.");
-            return;
-        }
+            doomRootFolder = Path.GetFullPath(_doomRootFolder!);
 
-        if (IsSubdirectoryOf(doomRootFolder, outputFolder))
-        {
-            ShowError("DOOM Eternal folder cannot be inside the patch files folder.");
-            return;
-        }
-    }
-    else
-    {
-        if (IsValidDoomRootFolder(outputFolder))
-        {
-            ShowError("Download folder cannot be an existing DOOM Eternal root folder. Choose a separate empty folder.");
-            return;
-        }
+            if (!IsValidDoomRootFolder(doomRootFolder))
+            {
+                ShowErrorKey("InvalidDoomRootFolder");
+                return;
+            }
 
-        if (!string.IsNullOrWhiteSpace(_doomRootFolder) &&
-            AreSameDirectory(outputFolder, _doomRootFolder))
-        {
-            ShowError("Download folder cannot be the selected DOOM Eternal root folder.");
-            return;
-        }
-    }
+            if (AreSameDirectory(outputFolder, doomRootFolder))
+            {
+                ShowErrorKey("PatchFolderSameAsGame");
+                return;
+            }
 
-    if (!Directory.Exists(outputFolder))
-    {
-        DialogResult createFolderResult = MessageBox.Show(
-            this,
-            downloadAllFiles
-                ? "Download folder does not exist.\n\nCreate it now?"
-                : "Patch files folder does not exist.\n\nCreate it now?",
-            downloadAllFiles ? "Create download folder" : "Create patch files folder",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Question);
-
-        if (createFolderResult != DialogResult.Yes)
-        {
-            WriteLog("Operation cancelled. Output folder was not created.");
-            return;
-        }
-
-        Directory.CreateDirectory(outputFolder);
-        WriteLog($"Created output folder: {outputFolder}");
-    }
-
-    if (Directory.EnumerateFileSystemEntries(outputFolder).Any())
-    {
-        DialogResult clearResult = MessageBox.Show(
-            this,
-            downloadAllFiles
-                ? "The selected download folder is not empty.\n\nDownload All Files should use an empty folder.\n\nClear it now?"
-                : "The selected patch files folder is not empty.\n\nIt should be cleared before downloading new downpatch files.\n\nClear it now?",
-            "Clear output folder",
-            MessageBoxButtons.YesNo,
-            MessageBoxIcon.Warning);
-
-        if (clearResult != DialogResult.Yes)
-        {
-            WriteLog("Operation cancelled. Output folder was not cleared.");
-            return;
-        }
-
-        ClearDirectory(outputFolder);
-        WriteLog("Output folder cleared.");
-    }
-
-    DialogResult result = MessageBox.Show(
-        this,
-        downloadAllFiles
-            ? "This will download a full standalone copy of the selected DOOM Eternal version.\n\nIt will not modify your selected Steam install.\n\nContinue?"
-            : "This will download downpatch files using DepotDownloader and then apply them to the selected DOOM Eternal root folder.\n\nExisting replaced files will be backed up first.\n\nContinue?",
-        downloadAllFiles ? "Download all files" : "Start downpatch",
-        MessageBoxButtons.YesNo,
-        MessageBoxIcon.Warning);
-
-    if (result != DialogResult.Yes)
-    {
-        WriteLog("Operation cancelled before download.");
-        return;
-    }
-
-    _requiredFieldsLabel.Text = "Ready";
-    _requiredFieldsLabel.ForeColor = Color.DarkGreen;
-
-    _operationCancellation = new CancellationTokenSource();
-
-    SetRunningState(true);
-
-    try
-    {
-        WriteLog($"Mode: {(downloadAllFiles ? "Download All Files" : "Patch existing install")}");
-        WriteLog($"Selected version: {selectedVersion.Name}");
-        WriteLog($"Steam account: {_steamUsernameTextBox.Text.Trim()}");
-        WriteLog($"DepotDownloader: {depotDownloaderPath}");
-
-        if (downloadAllFiles)
-        {
-            WriteLog("Filelist: disabled");
-            WriteLog($"Download folder: {outputFolder}");
+            if (IsSubdirectoryOf(doomRootFolder, outputFolder))
+            {
+                ShowErrorKey("DoomFolderInsidePatchFolder");
+                return;
+            }
         }
         else
         {
-            WriteLog($"Filelist: {fileListPath}");
-            WriteLog($"Patch files folder: {outputFolder}");
-            WriteLog($"DOOM Eternal root folder: {doomRootFolder}");
+            if (IsValidDoomRootFolder(outputFolder))
+            {
+                ShowErrorKey("DownloadFolderIsDoomRoot");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_doomRootFolder) &&
+                AreSameDirectory(outputFolder, _doomRootFolder))
+            {
+                ShowErrorKey("DownloadFolderSameAsRoot");
+                return;
+            }
         }
 
-        for (int i = 0; i < DepotIds.Length; i++)
+        if (!Directory.Exists(outputFolder))
         {
-            _operationCancellation.Token.ThrowIfCancellationRequested();
+    DialogResult createFolderResult = MessageBox.Show(
+        this,
+        downloadAllFiles
+            ? L("DownloadFolderDoesNotExistCreate")
+            : L("PatchFolderDoesNotExistCreate"),
+    downloadAllFiles ? L("CreateDownloadFolder") : L("CreatePatchFolder"),
+    MessageBoxButtons.YesNo,
+    MessageBoxIcon.Question);
 
-            int depotId = DepotIds[i];
-            string manifestId = selectedVersion.ManifestIds[i];
+            if (createFolderResult != DialogResult.Yes)
+            {
+                WriteLog("Operation cancelled. Output folder was not created.");
+                return;
+            }
 
-            WriteLog($"Downloading depot {depotId}.");
-
-            await RunDepotDownloaderAsync(
-                depotDownloaderPath,
-                depotId,
-                manifestId,
-                fileListPath,
-                !downloadAllFiles,
-                _steamUsernameTextBox.Text.Trim(),
-                _steamPasswordTextBox.Text,
-                outputFolder,
-                _operationCancellation.Token);
-
-            WriteLog($"Depot {depotId} completed.");
+            Directory.CreateDirectory(outputFolder);
+            WriteLog($"Created output folder: {outputFolder}");
         }
 
-        if (!Directory.EnumerateFileSystemEntries(outputFolder).Any())
+        if (Directory.EnumerateFileSystemEntries(outputFolder).Any())
         {
-            throw new InvalidOperationException("DepotDownloader finished, but output folder is empty.");
-        }
-
-        WriteLog("Download completed.");
-
-        if (downloadAllFiles)
-        {
-            EnsureSteamAppIdFile(outputFolder);
-
-            WriteLog("steam_appid.txt created.");
-            WriteLog("Download All Files completed successfully.");
-
-            MessageBox.Show(
+            DialogResult clearResult = MessageBox.Show(
                 this,
-                "Download All Files completed successfully.\n\nYou can add DOOMEternalx64vk.exe as a Non-Steam Game.",
-                "EternalDownpatcher",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
+                downloadAllFiles
+                    ? "The selected download folder is not empty.\n\nDownload All Files should use an empty folder.\n\nClear it now?"
+                    : "The selected patch files folder is not empty.\n\nIt should be cleared before downloading new downpatch files.\n\nClear it now?",
+                "Clear output folder",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning);
 
+            if (clearResult != DialogResult.Yes)
+            {
+                WriteLog("Operation cancelled. Output folder was not cleared.");
+                return;
+            }
+
+            ClearDirectory(outputFolder);
+            WriteLog("Output folder cleared.");
+        }
+
+        DialogResult result = MessageBox.Show(
+            this,
+            downloadAllFiles
+                ? "This will download a full standalone copy of the selected DOOM Eternal version.\n\nIt will not modify your selected Steam install.\n\nContinue?"
+                : "This will download downpatch files using DepotDownloader and then apply them to the selected DOOM Eternal root folder.\n\nExisting replaced files will be backed up first.\n\nContinue?",
+            downloadAllFiles ? "Download all files" : "Start downpatch",
+            MessageBoxButtons.YesNo,
+            MessageBoxIcon.Warning);
+
+        if (result != DialogResult.Yes)
+        {
+            WriteLog("Operation cancelled before download.");
             return;
         }
 
-        string backupFolder = Path.Combine(
-            doomRootFolder!,
-            "EternalDownpatcher_Backup_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+        _requiredFieldsLabel.Text = L("Ready");
+        ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
 
-        WriteLog($"Backup folder: {backupFolder}");
-        WriteLog("Applying patch files...");
+        _operationCancellation = new CancellationTokenSource();
 
-        int copiedFiles = await Task.Run(
-            () => ApplyDownpatchFiles(
-                outputFolder,
+        SetRunningState(true);
+
+        try
+        {
+            WriteLog($"Mode: {(downloadAllFiles ? "Download All Files" : "Patch existing install")}");
+            WriteLog($"Selected version: {selectedVersion.Name}");
+            WriteLog($"Steam account: {_steamUsernameTextBox.Text.Trim()}");
+            WriteLog($"DepotDownloader: {depotDownloaderPath}");
+
+            if (downloadAllFiles)
+            {
+                WriteLog("Filelist: disabled");
+                WriteLog($"Download folder: {outputFolder}");
+            }
+            else
+            {
+                WriteLog($"Filelist: {fileListPath}");
+                WriteLog($"Patch files folder: {outputFolder}");
+                WriteLog($"DOOM Eternal root folder: {doomRootFolder}");
+            }
+
+            for (int i = 0; i < DepotIds.Length; i++)
+            {
+                _operationCancellation.Token.ThrowIfCancellationRequested();
+
+                int depotId = DepotIds[i];
+                string manifestId = selectedVersion.ManifestIds[i];
+
+                WriteLog($"Downloading depot {depotId}.");
+
+                await RunDepotDownloaderAsync(
+                    depotDownloaderPath,
+                    depotId,
+                    manifestId,
+                    fileListPath,
+                    !downloadAllFiles,
+                    _steamUsernameTextBox.Text.Trim(),
+                    _steamPasswordTextBox.Text,
+                    outputFolder,
+                    _operationCancellation.Token);
+
+                WriteLog($"Depot {depotId} completed.");
+            }
+
+            if (!Directory.EnumerateFileSystemEntries(outputFolder).Any())
+            {
+                throw new InvalidOperationException(L("OutputFolderEmptyAfterDownload"));
+            }
+
+            WriteLog("Download completed.");
+
+            if (downloadAllFiles)
+            {
+                EnsureSteamAppIdFile(outputFolder);
+
+                WriteLog("steam_appid.txt created.");
+                WriteLog("Download All Files completed successfully.");
+
+                MessageBox.Show(
+                    this,
+                    "Download All Files completed successfully.\n\nYou can add DOOMEternalx64vk.exe as a Non-Steam Game.",
+                    "EternalDownpatcher",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                return;
+            }
+
+            string backupFolder = Path.Combine(
                 doomRootFolder!,
-                backupFolder),
-            _operationCancellation.Token);
+                "EternalDownpatcher_Backup_" + DateTime.Now.ToString("yyyyMMdd_HHmmss"));
 
-        WriteLog($"Completed. Files copied: {copiedFiles}");
-        WriteLog("Downpatch completed successfully.");
+            WriteLog($"Backup folder: {backupFolder}");
+            WriteLog("Applying patch files...");
 
-        MessageBox.Show(
-            this,
-            "Downpatch completed successfully.",
-            "EternalDownpatcher",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Information);
-    }
-    catch (OperationCanceledException)
-    {
-        WriteLog("Operation cancelled.");
-    }
-    catch (Exception exception)
-    {
-        WriteLog($"ERROR: {exception.Message}");
+            int copiedFiles = await Task.Run(
+                () => ApplyDownpatchFiles(
+                    outputFolder,
+                    doomRootFolder!,
+                    backupFolder),
+                _operationCancellation.Token);
 
-        MessageBox.Show(
-            this,
-            exception.Message,
-            "EternalDownpatcher",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Error);
-    }
-    finally
-    {
-        _operationCancellation?.Dispose();
-        _operationCancellation = null;
+            WriteLog($"Completed. Files copied: {copiedFiles}");
+            WriteLog("Downpatch completed successfully.");
 
-        SetRunningState(false);
+            MessageBox.Show(
+                this,
+                "Downpatch completed successfully.",
+                "EternalDownpatcher",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+        }
+        catch (OperationCanceledException)
+        {
+            WriteLog("Operation cancelled.");
+        }
+        catch (Exception exception)
+        {
+            WriteLog($"ERROR: {exception.Message}");
+
+            MessageBox.Show(
+                this,
+                exception.Message,
+                "EternalDownpatcher",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+        }
+        finally
+        {
+            _operationCancellation?.Dispose();
+            _operationCancellation = null;
+
+            SetRunningState(false);
+        }
     }
-}
 
     private void CancelButton_Click(object? sender, EventArgs e)
     {
@@ -1230,76 +1244,77 @@ private async void StartButton_Click(object? sender, EventArgs e)
         WriteLog("Cancelling operation.");
     }
 
-private void SelectGameFolderButton_Click(object? sender, EventArgs e)
-{
-    using FolderBrowserDialog dialog = new()
+    private void SelectGameFolderButton_Click(object? sender, EventArgs e)
     {
-        Description = "Select DOOM Eternal root folder",
-        UseDescriptionForTitle = true
-    };
+        using FolderBrowserDialog dialog = new()
+        {
+            Description = "Select DOOM Eternal root folder",
+            UseDescriptionForTitle = true
+        };
 
-    if (dialog.ShowDialog(this) != DialogResult.OK)
-    {
-        return;
-    }
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
 
-    string selectedPath = Path.GetFullPath(dialog.SelectedPath);
+        string selectedPath = Path.GetFullPath(dialog.SelectedPath);
 
-    if (!IsValidDoomRootFolder(selectedPath))
-    {
-        _doomRootFolder = null;
-        _installedVersion = null;
+        if (!IsValidDoomRootFolder(selectedPath))
+        {
+            _doomRootFolder = null;
+            _installedVersion = null;
 
-        _gameFolderStatusLabel.Text = "Invalid DOOM Eternal root folder.";
-        _gameFolderStatusLabel.ForeColor = Color.Red;
+            _gameFolderStatusLabel.Text = L("InvalidDoomRootFolderShort");
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
 
-        RefreshDownpatchVersions();
+            RefreshDownpatchVersions();
 
-        WriteLog("ERROR: Selected folder does not contain DOOMEternalx64vk.exe.");
+            WriteLog($"ERROR: {L("InvalidFolderNoExe")}");
 
-        MessageBox.Show(
-            this,
-            "Selected folder does not contain DOOMEternalx64vk.exe.",
-            "EternalDownpatcher",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Error);
+            MessageBox.Show(
+                this,
+                L("InvalidFolderNoExe"),
+                "EternalDownpatcher",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
 
-        return;
-    }
+            return;
+        }
 
-    _doomRootFolder = selectedPath;
-    _installedVersion = DetectInstalledVersion(selectedPath);
+        _doomRootFolder = selectedPath;
+        _installedVersion = DetectInstalledVersion(selectedPath);
 
-    if (_installedVersion is null)
-    {
-        _gameFolderStatusLabel.Text = "Root selected, but version was not detected.";
-        _gameFolderStatusLabel.ForeColor = Color.Red;
+        if (_installedVersion is null)
+        {
+            _gameFolderStatusLabel.Text = L("RootSelectedButVersionNotDetected");
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
 
-        RefreshDownpatchVersions();
+            RefreshDownpatchVersions();
+
+            WriteLog($"DOOM Eternal folder: {selectedPath}");
+            WriteLog($"ERROR: {L("DetectVersionFailed")}");
+
+            MessageBox.Show(
+                this,
+                L("DetectVersionFailed"),
+                "EternalDownpatcher",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error);
+
+            return;
+        }
+
+        _gameFolderStatusLabel.Text =
+            string.Format(L("RootSelected"), _installedVersion.Name);
+
+        ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
 
         WriteLog($"DOOM Eternal folder: {selectedPath}");
-        WriteLog("ERROR: Unable to detect installed DOOM Eternal version from executable size.");
+        WriteLog($"Installed DOOM Eternal version: {_installedVersion.Name}");
 
-        MessageBox.Show(
-            this,
-            "Unable to detect installed DOOM Eternal version from DOOMEternalx64vk.exe size.",
-            "EternalDownpatcher",
-            MessageBoxButtons.OK,
-            MessageBoxIcon.Error);
-
-        return;
+        RefreshDownpatchVersions();
     }
 
-    _gameFolderStatusLabel.Text =
-        $"Root selected. Installed version: {_installedVersion.Name}";
-
-    _gameFolderStatusLabel.ForeColor = Color.DarkGreen;
-
-    WriteLog($"DOOM Eternal folder: {selectedPath}");
-    WriteLog($"Installed DOOM Eternal version: {_installedVersion.Name}");
-
-    RefreshDownpatchVersions();
-}
     private void SelectDownpatchFolderButton_Click(object? sender, EventArgs e)
     {
         using FolderBrowserDialog dialog = new()
@@ -1323,7 +1338,7 @@ private void SelectGameFolderButton_Click(object? sender, EventArgs e)
 
 private void HelpButton_Click(object? sender, EventArgs e)
 {
-    using HelpForm helpForm = new(_darkModeSwitch.Checked);
+    using HelpForm helpForm = new(_isDarkTheme, _userSettings.Language);
     helpForm.ShowDialog(this);
 }
 
@@ -1571,88 +1586,88 @@ private void HelpButton_Click(object? sender, EventArgs e)
         }
     }
 
-private static void EnsureSteamAppIdFile(string folder) //оно воняет    
-{
-    File.WriteAllText(
-        Path.Combine(folder, "steam_appid.txt"),
-        "782330");
-}
-
-private async Task RunDepotDownloaderAsync(
-    string depotDownloaderPath,
-    int depotId,
-    string manifestId,
-    string? fileListPath,
-    bool useFileList,
-    string username,
-    string password,
-    string outputFolder,
-    CancellationToken cancellationToken)
-{
-    ProcessStartInfo startInfo = new()
+    private static void EnsureSteamAppIdFile(string folder)
     {
-        FileName = depotDownloaderPath,
-        WorkingDirectory = Path.GetDirectoryName(depotDownloaderPath) ?? GetAppWorkingFolder(),
-        UseShellExecute = false,
-        CreateNoWindow = false
-    };
+        File.WriteAllText(
+            Path.Combine(folder, "steam_appid.txt"),
+            "782330");
+    }
 
-    startInfo.ArgumentList.Add("-app");
-    startInfo.ArgumentList.Add("782330");
-    startInfo.ArgumentList.Add("-depot");
-    startInfo.ArgumentList.Add(depotId.ToString());
-    startInfo.ArgumentList.Add("-manifest");
-    startInfo.ArgumentList.Add(manifestId);
-    startInfo.ArgumentList.Add("-username");
-    startInfo.ArgumentList.Add(username);
-    startInfo.ArgumentList.Add("-password");
-    startInfo.ArgumentList.Add(password);
-    startInfo.ArgumentList.Add("-remember-password");
-
-    if (useFileList)
+    private async Task RunDepotDownloaderAsync(
+        string depotDownloaderPath,
+        int depotId,
+        string manifestId,
+        string? fileListPath,
+        bool useFileList,
+        string username,
+        string password,
+        string outputFolder,
+        CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(fileListPath))
+        ProcessStartInfo startInfo = new()
         {
-            throw new InvalidOperationException("Filelist path is empty.");
+            FileName = depotDownloaderPath,
+            WorkingDirectory = Path.GetDirectoryName(depotDownloaderPath) ?? GetAppWorkingFolder(),
+            UseShellExecute = false,
+            CreateNoWindow = false
+        };
+
+        startInfo.ArgumentList.Add("-app");
+        startInfo.ArgumentList.Add("782330");
+        startInfo.ArgumentList.Add("-depot");
+        startInfo.ArgumentList.Add(depotId.ToString());
+        startInfo.ArgumentList.Add("-manifest");
+        startInfo.ArgumentList.Add(manifestId);
+        startInfo.ArgumentList.Add("-username");
+        startInfo.ArgumentList.Add(username);
+        startInfo.ArgumentList.Add("-password");
+        startInfo.ArgumentList.Add(password);
+        startInfo.ArgumentList.Add("-remember-password");
+
+        if (useFileList)
+        {
+            if (string.IsNullOrWhiteSpace(fileListPath))
+            {
+                throw new InvalidOperationException("Filelist path is empty.");
+            }
+
+            startInfo.ArgumentList.Add("-filelist");
+            startInfo.ArgumentList.Add(fileListPath);
         }
 
-        startInfo.ArgumentList.Add("-filelist");
-        startInfo.ArgumentList.Add(fileListPath);
-    }
+        startInfo.ArgumentList.Add("-dir");
+        startInfo.ArgumentList.Add(outputFolder);
 
-    startInfo.ArgumentList.Add("-dir");
-    startInfo.ArgumentList.Add(outputFolder);
-
-    using Process process = new()
-    {
-        StartInfo = startInfo
-    };
-
-    process.Start();
-
-    using CancellationTokenRegistration registration = cancellationToken.Register(
-        () =>
+        using Process process = new()
         {
-            try
+            StartInfo = startInfo
+        };
+
+        process.Start();
+
+        using CancellationTokenRegistration registration = cancellationToken.Register(
+            () =>
             {
-                if (!process.HasExited)
+                try
                 {
-                    process.Kill(true);
+                    if (!process.HasExited)
+                    {
+                        process.Kill(true);
+                    }
                 }
-            }
-            catch
-            {
-            }
-        });
+                catch
+                {
+                }
+            });
 
-    await process.WaitForExitAsync(cancellationToken);
+        await process.WaitForExitAsync(cancellationToken);
 
-    if (process.ExitCode != 0)
-    {
-        throw new InvalidOperationException(
-            $"DepotDownloader failed on depot {depotId}. Exit code: {process.ExitCode}");
+        if (process.ExitCode != 0)
+        {
+            throw new InvalidOperationException(
+                LF("DepotFailed", depotId, process.ExitCode));
+        }
     }
-}
 
     private int ApplyDownpatchFiles(
         string sourceFolder,
@@ -1758,236 +1773,358 @@ private async Task RunDepotDownloaderAsync(
             MessageBoxIcon.Error);
     }
 
-private void SetRunningState(bool isRunning)
-{
-    _isRunning = isRunning;
-
-    _startButton.Enabled = !isRunning;
-    _cancelButton.Enabled = isRunning;
-
-    _selectGameFolderButton.Enabled =
-        !isRunning && !_downloadAllFilesCheckBox.Checked;
-
-    _selectDownpatchFolderButton.Enabled = !isRunning;
-    _versionComboBox.Enabled = !isRunning;
-    _steamUsernameTextBox.Enabled = !isRunning;
-    _steamPasswordTextBox.Enabled = !isRunning;
-
-    _downloadAllFilesCheckBox.Enabled = !isRunning;
-
-    _validateFilesCheckBox.Enabled =
-        !isRunning && !_downloadAllFilesCheckBox.Checked;
-
-    _restoreBackupButton.Enabled = !isRunning;
-    _openOutputFolderButton.Enabled = !isRunning;
-    _darkModeSwitch.Enabled = !isRunning;
-}
-private readonly record struct ThemePalette(
-    Color FormBack,
-    Color TextColor,
-    Color InputBack,
-    Color InputFore,
-    Color ButtonBack,
-    Color ButtonFore);
-
-private void ConfigureThemeTransition()
-{
-    _themeTransitionTimer.Interval = 15;
-    _themeTransitionTimer.Tick += ThemeTransitionTimer_Tick;
-}
-
-private void DarkModeSwitch_CheckedChanged(object? sender, EventArgs e)
-{
-    if (_loadingTheme)
+    private string L(string key)
     {
-        return;
+        string language = string.IsNullOrWhiteSpace(_userSettings.Language)
+            ? "en"
+            : _userSettings.Language;
+
+        return T(language, key);
     }
 
-    _userSettings.DarkMode = _darkModeSwitch.Checked;
-    UserSettingsStore.Save(_userSettings);
-
-    StartThemeTransition(_darkModeSwitch.Checked);
-}
-
-private void StartThemeTransition(bool dark)
-{
-    _themeTransitionTimer.Stop();
-
-    _targetDarkTheme = dark;
-    _themeTransitionFrame = 0;
-
-    _themeTransitionFrom = CaptureCurrentThemePalette();
-    _themeTransitionTo = GetThemePalette(dark);
-
-    _themeTransitionTimer.Start();
-}
-
-private void ThemeTransitionTimer_Tick(object? sender, EventArgs e)
-{
-    _themeTransitionFrame++;
-
-    double progress = Math.Min(
-        1.0,
-        (double)_themeTransitionFrame / ThemeTransitionFrames);
-
-    progress = progress * progress * (3.0 - 2.0 * progress);
-
-    ThemePalette palette = LerpThemePalette(
-        _themeTransitionFrom,
-        _themeTransitionTo,
-        progress);
-
-    ApplyThemePalette(palette, _targetDarkTheme);
-
-    if (_themeTransitionFrame < ThemeTransitionFrames)
+    private string LF(string key, params object[] args)
     {
-        return;
+        return string.Format(L(key), args);
     }
 
-    _themeTransitionTimer.Stop();
+    private void ShowErrorKey(string key, params object[] args)
+    {
+        string message = LF(key, args);
 
-    _isDarkTheme = _targetDarkTheme;
-    ApplyTheme(_isDarkTheme);
-}
+        WriteLog($"ERROR: {message}");
 
-private ThemePalette CaptureCurrentThemePalette()
-{
-    return new ThemePalette(
-        BackColor,
-        _darkModeSwitch.ForeColor,
-        _steamUsernameTextBox.BackColor,
-        _steamUsernameTextBox.ForeColor,
-        _startButton.BackColor,
-        _startButton.ForeColor);
-}
+        MessageBox.Show(
+            this,
+            message,
+            "EternalDownpatcher",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Error);
+    }
 
-private static ThemePalette GetThemePalette(bool dark)
-{
-    if (dark)
+    private void SetRunningState(bool isRunning)
+    {
+        _isRunning = isRunning;
+
+        _startButton.Enabled = !isRunning;
+        _cancelButton.Enabled = isRunning;
+
+        _selectGameFolderButton.Enabled =
+            !isRunning && !_downloadAllFilesCheckBox.Checked;
+
+        _selectDownpatchFolderButton.Enabled = !isRunning;
+        _versionComboBox.Enabled = !isRunning;
+        _steamUsernameTextBox.Enabled = !isRunning;
+        _steamPasswordTextBox.Enabled = !isRunning;
+
+        _downloadAllFilesCheckBox.Enabled = !isRunning;
+
+        _validateFilesCheckBox.Enabled =
+            !isRunning && !_downloadAllFilesCheckBox.Checked;
+
+        _restoreBackupButton.Enabled = !isRunning;
+        _openOutputFolderButton.Enabled = !isRunning;
+        _themeToggleButton.Enabled = !isRunning;
+        _settingsButton.Enabled = !isRunning;
+    }
+
+    private readonly record struct ThemePalette(
+        Color FormBack,
+        Color TextColor,
+        Color MutedTextColor,
+        Color InputBack,
+        Color InputFore,
+        Color InputBorder,
+        Color ButtonBack,
+        Color ButtonFore,
+        Color ButtonHover,
+        Color ButtonDown,
+        Color ErrorColor,
+        Color SuccessColor,
+        Color LogBack,
+        Color LogFore);
+
+    private void ConfigureThemeTransition()
+    {
+        _themeTransitionTimer.Interval = 15;
+        _themeTransitionTimer.Tick += ThemeTransitionTimer_Tick;
+    }
+
+    private void StartThemeTransition(bool dark)
+    {
+        _themeTransitionTimer.Stop();
+
+        _targetDarkTheme = dark;
+        _themeTransitionFrame = 0;
+
+        _themeTransitionFrom = CaptureCurrentThemePalette();
+        _themeTransitionTo = GetThemePalette(dark);
+
+        UpdateThemeToggleIcon(dark);
+
+        _themeTransitionTimer.Start();
+    }
+
+    private void ThemeTransitionTimer_Tick(object? sender, EventArgs e)
+    {
+        _themeTransitionFrame++;
+
+        double progress = Math.Min(
+            1.0,
+            (double)_themeTransitionFrame / ThemeTransitionFrames);
+
+        progress = progress * progress * (3.0 - 2.0 * progress);
+
+        ThemePalette palette = LerpThemePalette(
+            _themeTransitionFrom,
+            _themeTransitionTo,
+            progress);
+
+        ApplyThemePalette(palette, _targetDarkTheme);
+
+        if (_themeTransitionFrame < ThemeTransitionFrames)
+        {
+            return;
+        }
+
+        _themeTransitionTimer.Stop();
+
+        _isDarkTheme = _targetDarkTheme;
+        ApplyTheme(_isDarkTheme);
+    }
+
+    private ThemePalette CaptureCurrentThemePalette()
+    {
+        ThemePalette fallback = GetThemePalette(_isDarkTheme);
+
+        return new ThemePalette(
+            BackColor,
+            ForeColor,
+            fallback.MutedTextColor,
+            _steamUsernameTextBox.BackColor,
+            _steamUsernameTextBox.ForeColor,
+            fallback.InputBorder,
+            _startButton.BackColor,
+            _startButton.ForeColor,
+            fallback.ButtonHover,
+            fallback.ButtonDown,
+            fallback.ErrorColor,
+            fallback.SuccessColor,
+            _consoleBox.BackColor,
+            _consoleBox.ForeColor);
+    }
+
+    private static ThemePalette GetThemePalette(bool dark)
+    {
+        if (dark)
+        {
+            return new ThemePalette(
+                Color.FromArgb(21, 23, 28),
+                Color.FromArgb(235, 238, 245),
+                Color.FromArgb(170, 176, 188),
+                Color.FromArgb(32, 36, 43),
+                Color.FromArgb(240, 243, 250),
+                Color.FromArgb(74, 82, 97),
+                Color.FromArgb(42, 47, 56),
+                Color.FromArgb(240, 243, 250),
+                Color.FromArgb(52, 59, 70),
+                Color.FromArgb(35, 40, 48),
+                Color.FromArgb(255, 107, 107),
+                Color.FromArgb(123, 216, 143),
+                Color.Black,
+                Color.FromArgb(235, 235, 235));
+        }
+
+        return new ThemePalette(
+            Color.FromArgb(245, 247, 250),
+            Color.FromArgb(25, 28, 33),
+            Color.FromArgb(90, 98, 110),
+            Color.White,
+            Color.FromArgb(25, 28, 33),
+            Color.FromArgb(200, 207, 218),
+            Color.FromArgb(238, 241, 246),
+            Color.FromArgb(25, 28, 33),
+            Color.FromArgb(226, 231, 238),
+            Color.FromArgb(215, 221, 230),
+            Color.FromArgb(210, 45, 45),
+            Color.FromArgb(32, 145, 70),
+            Color.Black,
+            Color.FromArgb(235, 235, 235));
+    }
+
+    private static ThemePalette LerpThemePalette(
+        ThemePalette from,
+        ThemePalette to,
+        double amount)
     {
         return new ThemePalette(
-            Color.FromArgb(32, 32, 32),
-            Color.Gainsboro,
-            Color.FromArgb(45, 45, 48),
-            Color.White,
-            Color.FromArgb(55, 55, 58),
-            Color.White);
+            LerpColor(from.FormBack, to.FormBack, amount),
+            LerpColor(from.TextColor, to.TextColor, amount),
+            LerpColor(from.MutedTextColor, to.MutedTextColor, amount),
+            LerpColor(from.InputBack, to.InputBack, amount),
+            LerpColor(from.InputFore, to.InputFore, amount),
+            LerpColor(from.InputBorder, to.InputBorder, amount),
+            LerpColor(from.ButtonBack, to.ButtonBack, amount),
+            LerpColor(from.ButtonFore, to.ButtonFore, amount),
+            LerpColor(from.ButtonHover, to.ButtonHover, amount),
+            LerpColor(from.ButtonDown, to.ButtonDown, amount),
+            LerpColor(from.ErrorColor, to.ErrorColor, amount),
+            LerpColor(from.SuccessColor, to.SuccessColor, amount),
+            LerpColor(from.LogBack, to.LogBack, amount),
+            LerpColor(from.LogFore, to.LogFore, amount));
     }
 
-    return new ThemePalette(
-        SystemColors.Control,
-        SystemColors.ControlText,
-        SystemColors.Window,
-        SystemColors.WindowText,
-        SystemColors.Control,
-        SystemColors.ControlText);
-}
-
-private static ThemePalette LerpThemePalette(
-    ThemePalette from,
-    ThemePalette to,
-    double amount)
-{
-    return new ThemePalette(
-        LerpColor(from.FormBack, to.FormBack, amount),
-        LerpColor(from.TextColor, to.TextColor, amount),
-        LerpColor(from.InputBack, to.InputBack, amount),
-        LerpColor(from.InputFore, to.InputFore, amount),
-        LerpColor(from.ButtonBack, to.ButtonBack, amount),
-        LerpColor(from.ButtonFore, to.ButtonFore, amount));
-}
-
-private static Color LerpColor(Color from, Color to, double amount)
-{
-    int red = LerpByte(from.R, to.R, amount);
-    int green = LerpByte(from.G, to.G, amount);
-    int blue = LerpByte(from.B, to.B, amount);
-
-    return Color.FromArgb(red, green, blue);
-}
-
-private static int LerpByte(int from, int to, double amount)
-{
-    return (int)Math.Round(from + ((to - from) * amount));
-}
-
-private void ApplyTheme(bool dark)
-{
-    _isDarkTheme = dark;
-    ApplyThemePalette(GetThemePalette(dark), dark);
-}
-
-private void ApplyThemePalette(ThemePalette palette, bool dark)
-{
-    BackColor = palette.FormBack;
-    ForeColor = palette.TextColor;
-
-    foreach (Control control in Controls)
+    private static Color LerpColor(Color from, Color to, double amount)
     {
-        ApplyThemeToControl(control, palette, dark);
+        int red = LerpByte(from.R, to.R, amount);
+        int green = LerpByte(from.G, to.G, amount);
+        int blue = LerpByte(from.B, to.B, amount);
+
+        return Color.FromArgb(red, green, blue);
     }
 
-    _consoleBox.BackColor = Color.Black;
-    _consoleBox.ForeColor = Color.White;
-}
+    private static int LerpByte(int from, int to, double amount)
+    {
+        return (int)Math.Round(from + ((to - from) * amount));
+    }
 
-private void ApplyThemeToControl(
-    Control control,
-    ThemePalette palette,
-    bool dark)
-{
-    if (control is RichTextBox richTextBox)
+    private void ApplyTheme(bool dark)
     {
-        richTextBox.BackColor = Color.Black;
-        richTextBox.ForeColor = Color.White;
+        _isDarkTheme = dark;
+        ApplyThemePalette(GetThemePalette(dark), dark);
+        UpdateThemeToggleIcon(dark);
     }
-    else if (control is TextBox textBox)
-    {
-        textBox.BackColor = palette.InputBack;
-        textBox.ForeColor = palette.InputFore;
-    }
-    else if (control is ComboBox comboBox)
-    {
-        comboBox.BackColor = palette.InputBack;
-        comboBox.ForeColor = palette.InputFore;
-    }
-    else if (control is Button button)
-    {
-        button.UseVisualStyleBackColor = false;
-        button.BackColor = palette.ButtonBack;
-        button.ForeColor = palette.ButtonFore;
-        button.FlatStyle = FlatStyle.Flat;
-        button.FlatAppearance.BorderSize = 1;
-        button.FlatAppearance.BorderColor = dark
-            ? Color.FromArgb(90, 90, 90)
-            : Color.FromArgb(160, 160, 160);
-    }
-    else if (control is CheckBox checkBox)
-    {
-        checkBox.BackColor = palette.FormBack;
-        checkBox.ForeColor = palette.TextColor;
-    }
-    else if (control is Label label)
-    {
-        label.BackColor = palette.FormBack;
 
-        if (label != _gameFolderStatusLabel &&
-            label != _requiredFieldsLabel)
+    private void ApplyThemePalette(ThemePalette palette, bool dark)
+    {
+        SuspendLayout();
+
+        BackColor = palette.FormBack;
+        ForeColor = palette.TextColor;
+
+        foreach (Control control in Controls)
         {
-            label.ForeColor = palette.TextColor;
+            ApplyThemeToControl(control, palette, dark);
+        }
+
+        _consoleBox.BackColor = palette.LogBack;
+        _consoleBox.ForeColor = palette.LogFore;
+
+        ApplyStatusLabelColors(palette);
+
+        ResumeLayout();
+        Invalidate(true);
+    }
+
+    private void ApplyThemeToControl(
+        Control control,
+        ThemePalette palette,
+        bool dark)
+    {
+        if (control is RichTextBox richTextBox)
+        {
+            richTextBox.BackColor = palette.LogBack;
+            richTextBox.ForeColor = palette.LogFore;
+            richTextBox.BorderStyle = BorderStyle.FixedSingle;
+        }
+        else if (control is TextBox textBox)
+        {
+            textBox.BackColor = palette.InputBack;
+            textBox.ForeColor = palette.InputFore;
+            textBox.BorderStyle = BorderStyle.FixedSingle;
+        }
+        else if (control is ComboBox comboBox)
+        {
+            comboBox.BackColor = palette.InputBack;
+            comboBox.ForeColor = palette.InputFore;
+            comboBox.FlatStyle = FlatStyle.Flat;
+        }
+        else if (control is Button button)
+        {
+            button.UseVisualStyleBackColor = false;
+            button.BackColor = palette.ButtonBack;
+            button.ForeColor = palette.ButtonFore;
+            button.FlatStyle = FlatStyle.Flat;
+            button.FlatAppearance.BorderSize = 1;
+            button.FlatAppearance.BorderColor = palette.InputBorder;
+            button.FlatAppearance.MouseOverBackColor = palette.ButtonHover;
+            button.FlatAppearance.MouseDownBackColor = palette.ButtonDown;
+            button.Cursor = Cursors.Hand;
+        }
+        else if (control is CheckBox checkBox)
+        {
+            checkBox.BackColor = palette.FormBack;
+            checkBox.ForeColor = palette.TextColor;
+            checkBox.FlatStyle = FlatStyle.Flat;
+            checkBox.FlatAppearance.BorderColor = palette.InputBorder;
+            checkBox.FlatAppearance.CheckedBackColor = dark
+                ? Color.FromArgb(77, 163, 255)
+                : Color.FromArgb(0, 120, 215);
+            checkBox.FlatAppearance.MouseOverBackColor = palette.ButtonHover;
+        }
+        else if (control is Label label)
+        {
+            label.BackColor = palette.FormBack;
+
+            if (label == _gameFolderStatusLabel ||
+                label == _requiredFieldsLabel)
+            {
+                ApplyStatusLabelColors(palette);
+            }
+            else if (label == _titleLabel)
+            {
+                label.ForeColor = dark
+                    ? Color.FromArgb(245, 247, 255)
+                    : Color.FromArgb(20, 24, 31);
+            }
+            else if (string.IsNullOrWhiteSpace(label.Text))
+            {
+                label.ForeColor = palette.MutedTextColor;
+            }
+            else
+            {
+                label.ForeColor = palette.TextColor;
+            }
+        }
+        else
+        {
+            control.BackColor = palette.FormBack;
+            control.ForeColor = palette.TextColor;
+        }
+
+        foreach (Control child in control.Controls)
+        {
+            ApplyThemeToControl(child, palette, dark);
         }
     }
-    else
+
+    private void ApplyStatusLabelColors(ThemePalette palette)
     {
-        control.BackColor = palette.FormBack;
-        control.ForeColor = palette.TextColor;
+        _gameFolderStatusLabel.ForeColor = IsPositiveStatus(_gameFolderStatusLabel.Text)
+            ? palette.SuccessColor
+            : palette.ErrorColor;
+
+        _requiredFieldsLabel.ForeColor = IsPositiveStatus(_requiredFieldsLabel.Text)
+            ? palette.SuccessColor
+            : palette.ErrorColor;
     }
 
-    foreach (Control child in control.Controls)
+    private static bool IsPositiveStatus(string text)
     {
-        ApplyThemeToControl(child, palette, dark);
+        string value = text.ToLowerInvariant();
+
+        return value.Contains("ready") ||
+               value.Contains("готово") ||
+               value.Contains("listo") ||
+               value.Contains("root selected") ||
+               value.Contains("папка выбрана") ||
+               value.Contains("carpeta seleccionada") ||
+               value.Contains("download all files mode") ||
+               value.Contains("режим download all files") ||
+               value.Contains("modo download all files") ||
+               value.Contains("installed version") ||
+               value.Contains("установленная версия") ||
+               value.Contains("versión instalada");
     }
-}
 
     private void WriteLogThreadSafe(string message)
     {
@@ -2005,47 +2142,48 @@ private void ApplyThemeToControl(
         WriteLog(message);
     }
 
-private void DownloadAllFilesCheckBox_CheckedChanged(object? sender, EventArgs e)
-{
-    if (_downloadAllFilesCheckBox.Checked)
+    private void DownloadAllFilesCheckBox_CheckedChanged(object? sender, EventArgs e)
     {
-        _startButton.Text = "Download";
-        _folderLabel.Text = "Download Folder";
-
-        _validateFilesCheckBox.Checked = false;
-        _validateFilesCheckBox.Enabled = false;
-
-        _selectGameFolderButton.Enabled = false;
-
-        _gameFolderStatusLabel.Text = "Download All Files mode: DOOM Eternal root folder is not needed.";
-        _gameFolderStatusLabel.ForeColor = Color.DarkGreen;
-
-        WriteLog("Download All Files mode enabled.");
-    }
-    else
-    {
-        _startButton.Text = "Downpatch";
-        _folderLabel.Text = "Patch Files Folder";
-
-        _validateFilesCheckBox.Enabled = !_isRunning;
-        _selectGameFolderButton.Enabled = !_isRunning;
-
-        if (_doomRootFolder is null)
+        if (_downloadAllFilesCheckBox.Checked)
         {
-            _gameFolderStatusLabel.Text = "DOOM Eternal root folder has not been selected.";
-            _gameFolderStatusLabel.ForeColor = Color.Red;
+            _startButton.Text = L("Download");
+            _folderLabel.Text = L("DownloadFolder");
+
+            _validateFilesCheckBox.Checked = false;
+            _validateFilesCheckBox.Enabled = false;
+
+            _selectGameFolderButton.Enabled = false;
+
+            _gameFolderStatusLabel.Text = L("DownloadAllFilesStatus");
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+
+            WriteLog("Download All Files mode enabled.");
         }
-        else if (_installedVersion is not null)
+        else
         {
-            _gameFolderStatusLabel.Text = $"Root selected. Installed version: {_installedVersion.Name}";
-            _gameFolderStatusLabel.ForeColor = Color.DarkGreen;
+            _startButton.Text = L("Downpatch");
+            _folderLabel.Text = L("PatchFilesFolder");
+
+            _validateFilesCheckBox.Enabled = !_isRunning;
+            _selectGameFolderButton.Enabled = !_isRunning;
+
+            if (_doomRootFolder is null)
+            {
+                _gameFolderStatusLabel.Text = L("RootNotSelected");
+            }
+            else if (_installedVersion is not null)
+            {
+                _gameFolderStatusLabel.Text = string.Format(L("RootSelected"), _installedVersion.Name);
+            }
+
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+
+            WriteLog("Patch existing install mode enabled.");
         }
 
-        WriteLog("Patch existing install mode enabled.");
+        RefreshDownpatchVersions();
+        ApplyLanguage();
     }
-
-    RefreshDownpatchVersions();
-}
 
     private void WriteLog(string message)
     {
@@ -2054,6 +2192,322 @@ private void DownloadAllFilesCheckBox_CheckedChanged(object? sender, EventArgs e
         _consoleBox.AppendText($"[{timestamp}] > {message}{Environment.NewLine}");
         _consoleBox.SelectionStart = _consoleBox.TextLength;
         _consoleBox.ScrollToCaret();
+    }
+
+    private void ThemeToggleButton_Click(object? sender, EventArgs e)
+    {
+        bool newDarkMode = !_isDarkTheme;
+
+        _userSettings.DarkMode = newDarkMode;
+        UserSettingsStore.Save(_userSettings);
+
+        StartThemeTransition(newDarkMode);
+    }
+
+    private void UpdateThemeToggleIcon(bool dark)
+    {
+        _themeToggleButton.Text = dark ? "☀" : "🌙";
+    }
+
+    private void SettingsButton_Click(object? sender, EventArgs e)
+    {
+        using SettingsForm settingsForm = new(_userSettings);
+
+        if (settingsForm.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        _userSettings.Language = settingsForm.SelectedLanguage;
+        UserSettingsStore.Save(_userSettings);
+
+        ApplyLanguage();
+    }
+
+    private void ApplyLanguage()
+    {
+        string language = string.IsNullOrWhiteSpace(_userSettings.Language)
+            ? "en"
+            : _userSettings.Language;
+
+        _selectGameFolderButton.Text = T(language, "SelectGameFolder");
+        _helpButton.Text = "Help";
+        _versionLabel.Text = T(language, "GameVersion");
+        _usernameLabel.Text = T(language, "SteamUsername");
+        _passwordLabel.Text = T(language, "SteamPassword");
+        _downloadAllFilesCheckBox.Text = T(language, "DownloadAllFiles");
+        _validateFilesCheckBox.Text = T(language, "ValidateFiles");
+        _consoleLabel.Text = T(language, "OutputLog");
+        _copyLogButton.Text = T(language, "CopyLog");
+        _selectDownpatchFolderButton.Text = T(language, "Browse");
+        _restoreBackupButton.Text = T(language, "RestoreBackup");
+        _openOutputFolderButton.Text = T(language, "OpenFolder");
+
+        _startButton.Text = _downloadAllFilesCheckBox.Checked
+            ? T(language, "Download")
+            : T(language, "Downpatch");
+
+        _folderLabel.Text = _downloadAllFilesCheckBox.Checked
+            ? T(language, "DownloadFolder")
+            : T(language, "PatchFilesFolder");
+
+        if (_downloadAllFilesCheckBox.Checked)
+        {
+            _gameFolderStatusLabel.Text = T(language, "DownloadAllFilesStatus");
+        }
+        else if (_doomRootFolder is null)
+        {
+            _gameFolderStatusLabel.Text = T(language, "RootNotSelected");
+        }
+        else if (_installedVersion is not null)
+        {
+            _gameFolderStatusLabel.Text = string.Format(T(language, "RootSelected"), _installedVersion.Name);
+        }
+
+        if (string.IsNullOrWhiteSpace(_requiredFieldsLabel.Text) ||
+            _requiredFieldsLabel.Text.Contains("Required", StringComparison.OrdinalIgnoreCase) ||
+            _requiredFieldsLabel.Text.Contains("обяз", StringComparison.OrdinalIgnoreCase) ||
+            _requiredFieldsLabel.Text.Contains("oblig", StringComparison.OrdinalIgnoreCase))
+        {
+            _requiredFieldsLabel.Text = T(language, "RequiredFieldsMissing");
+        }
+
+        ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+    }
+
+    private static string T(string language, string key)
+    {
+        Dictionary<string, string> en = new()
+        {
+            ["SelectGameFolder"] = "Select DOOM Eternal Folder",
+            ["GameVersion"] = "Game Version *",
+            ["SteamUsername"] = "Steam Username *",
+            ["SteamPassword"] = "Steam Password *",
+            ["DownloadAllFiles"] = "Download All Files",
+            ["ValidateFiles"] = "Validate files",
+            ["OutputLog"] = "Output Log",
+            ["CopyLog"] = "Copy Log",
+            ["Browse"] = "Browse",
+            ["RestoreBackup"] = "Restore Backup",
+            ["OpenFolder"] = "Open Folder",
+            ["Download"] = "Download",
+            ["Downpatch"] = "Downpatch",
+            ["DownloadFolder"] = "Download Folder",
+            ["PatchFilesFolder"] = "Patch Files Folder",
+            ["RequiredFieldsMissing"] = "* Required fields missing",
+            ["RootNotSelected"] = "DOOM Eternal root folder has not been selected.",
+            ["DownloadAllFilesStatus"] = "Download All Files mode: DOOM Eternal root folder is not needed.",
+            ["RootSelected"] = "Root selected. Installed version: {0}",
+            ["Ready"] = "Ready",
+            ["InvalidDoomRootFolderShort"] = "Invalid DOOM Eternal root folder.",
+            ["RootSelectedButVersionNotDetected"] = "Root selected, but version was not detected.",
+            ["OutputFolderDoesNotExist"] = "Output folder does not exist.",
+            ["InvalidDoomRootFolder"] = "Selected DOOM Eternal root folder is invalid. It must contain DOOMEternalx64vk.exe.",
+            ["SelectedTargetFolderInvalid"] = "Selected target folder is not a valid DOOM Eternal root folder.",
+            ["BackupFolderInvalid"] = "Selected backup folder is empty or invalid.",
+            ["RestoreBackupFailed"] = "Failed to restore backup: {0}",
+            ["VersionsJsonNotFound"] = "data\\versions.json was not found.",
+            ["LoadVersionsFailed"] = "Failed to load versions.json: {0}",
+            ["SelectedVersionInvalid"] = "Selected version is invalid.",
+            ["InvalidManifestData"] = "Selected version has invalid manifest data.",
+            ["InstalledVersionNotDetected"] = "Installed DOOM Eternal version was not detected.",
+            ["UnableCompareVersions"] = "Unable to compare selected and installed versions.",
+            ["TargetMustBeOlder"] = "Selected downpatch version must be older than the installed version.",
+            ["GenerateFilelistFailed"] = "Failed to generate filelist: {0}",
+            ["PatchFolderSameAsGame"] = "Patch files folder and DOOM Eternal folder cannot be the same folder.",
+            ["DoomFolderInsidePatchFolder"] = "DOOM Eternal folder cannot be inside the patch files folder.",
+            ["DownloadFolderIsDoomRoot"] = "Download folder cannot be an existing DOOM Eternal root folder. Choose a separate empty folder.",
+            ["DownloadFolderSameAsRoot"] = "Download folder cannot be the selected DOOM Eternal root folder.",
+            ["DepotDownloaderPrepareFailed"] = "Failed to prepare DepotDownloader: {0}",
+            ["RequiredFieldsLog"] = "Complete all required fields before starting.",
+            ["MissingGameVersion"] = "game version",
+            ["MissingSteamLogin"] = "Steam login",
+            ["MissingSteamPassword"] = "Steam password",
+            ["MissingDoomRoot"] = "DOOM Eternal root folder",
+            ["MissingDownloadFolder"] = "download folder",
+            ["MissingPatchFolder"] = "patch files folder",
+            ["MissingPrefix"] = "* Missing: {0}",
+            ["InvalidFolderNoExe"] = "Selected folder does not contain DOOMEternalx64vk.exe.",
+            ["DetectVersionFailed"] = "Unable to detect installed DOOM Eternal version from DOOMEternalx64vk.exe size.",
+            ["DepotFailed"] = "DepotDownloader failed on depot {0}. Exit code: {1}",
+            ["OutputFolderEmptyAfterDownload"] = "DepotDownloader finished, but output folder is empty.",
+            ["DepotDownloaderNotFoundQuestion"] = "DepotDownloader.exe was not found.\n\nDownload the latest version automatically?",
+            ["DownloadDepotDownloaderTitle"] = "Download DepotDownloader",
+            ["WelcomeLog"] = "Welcome to EternalDownpatcher.",
+            ["SelectVersionLog"] = "Select a version manually.",
+            ["SelectRootFolderLog"] = "Select DOOM Eternal root folder.",
+            ["WorkingFolderLog"] = "Working folder: {0}",
+            ["DefaultPatchFolderLog"] = "Default patch files folder: {0}",
+            ["ClickHelpLog"] = "Click Help button for instructions!",
+            ["LoadedVersionsLog"] = "Loaded versions: {0}",
+            ["VersionsSourceLog"] = "Versions source: {0}",
+            ["VersionLog"] = "EternalDownpatcher version: {0}",
+            ["DownloadFolderDoesNotExistCreate"] = "Download folder does not exist.\n\nCreate it now?",
+            ["PatchFolderDoesNotExistCreate"] = "Patch files folder does not exist.\n\nCreate it now?",
+            ["CreateDownloadFolder"] = "Create download folder",
+            ["CreatePatchFolder"] = "Create patch files folder"
+        };
+
+        Dictionary<string, string> ru = new()
+        {
+            ["SelectGameFolder"] = "Выбрать папку DOOM Eternal",
+            ["GameVersion"] = "Версия игры *",
+            ["SteamUsername"] = "Логин Steam *",
+            ["SteamPassword"] = "Пароль Steam *",
+            ["DownloadAllFiles"] = "Скачать все файлы",
+            ["ValidateFiles"] = "Проверять файлы",
+            ["OutputLog"] = "Лог",
+            ["CopyLog"] = "Копировать лог",
+            ["Browse"] = "Обзор",
+            ["RestoreBackup"] = "Восстановить бэкап",
+            ["OpenFolder"] = "Открыть папку",
+            ["Download"] = "Скачать",
+            ["Downpatch"] = "Даунпатч",
+            ["DownloadFolder"] = "Папка загрузки",
+            ["PatchFilesFolder"] = "Папка патч-файлов",
+            ["RequiredFieldsMissing"] = "* Не заполнены обязательные поля",
+            ["RootNotSelected"] = "Папка DOOM Eternal не выбрана.",
+            ["DownloadAllFilesStatus"] = "Режим Download All Files: папка DOOM Eternal не нужна.",
+            ["RootSelected"] = "Папка выбрана. Установленная версия: {0}",
+            ["Ready"] = "Готово",
+            ["InvalidDoomRootFolderShort"] = "Неверная папка DOOM Eternal.",
+            ["RootSelectedButVersionNotDetected"] = "Папка выбрана, но версия не была определена.",
+            ["OutputFolderDoesNotExist"] = "Папка вывода не существует.",
+            ["InvalidDoomRootFolder"] = "Выбранная папка DOOM Eternal неверная. В ней должен быть DOOMEternalx64vk.exe.",
+            ["SelectedTargetFolderInvalid"] = "Выбранная целевая папка не является корректной папкой DOOM Eternal.",
+            ["BackupFolderInvalid"] = "Выбранная папка бэкапа пустая или неверная.",
+            ["RestoreBackupFailed"] = "Не удалось восстановить бэкап: {0}",
+            ["VersionsJsonNotFound"] = "Файл data\\versions.json не найден.",
+            ["LoadVersionsFailed"] = "Не удалось загрузить versions.json: {0}",
+            ["SelectedVersionInvalid"] = "Выбранная версия неверная.",
+            ["InvalidManifestData"] = "У выбранной версии неверные manifest-данные.",
+            ["InstalledVersionNotDetected"] = "Установленная версия DOOM Eternal не была определена.",
+            ["UnableCompareVersions"] = "Не удалось сравнить выбранную и установленную версии.",
+            ["TargetMustBeOlder"] = "Выбранная версия для даунпатча должна быть старее установленной версии.",
+            ["GenerateFilelistFailed"] = "Не удалось создать filelist: {0}",
+            ["PatchFolderSameAsGame"] = "Папка патч-файлов и папка DOOM Eternal не могут быть одной и той же папкой.",
+            ["DoomFolderInsidePatchFolder"] = "Папка DOOM Eternal не может находиться внутри папки патч-файлов.",
+            ["DownloadFolderIsDoomRoot"] = "Папка загрузки не может быть существующей папкой DOOM Eternal. Выберите отдельную пустую папку.",
+            ["DownloadFolderSameAsRoot"] = "Папка загрузки не может совпадать с выбранной папкой DOOM Eternal.",
+            ["DepotDownloaderPrepareFailed"] = "Не удалось подготовить DepotDownloader: {0}",
+            ["RequiredFieldsLog"] = "Заполните все обязательные поля перед запуском.",
+            ["MissingGameVersion"] = "версия игры",
+            ["MissingSteamLogin"] = "логин Steam",
+            ["MissingSteamPassword"] = "пароль Steam",
+            ["MissingDoomRoot"] = "папка DOOM Eternal",
+            ["MissingDownloadFolder"] = "папка загрузки",
+            ["MissingPatchFolder"] = "папка патч-файлов",
+            ["MissingPrefix"] = "* Не заполнено: {0}",
+            ["InvalidFolderNoExe"] = "В выбранной папке нет DOOMEternalx64vk.exe.",
+            ["DetectVersionFailed"] = "Не удалось определить установленную версию DOOM Eternal по размеру DOOMEternalx64vk.exe.",
+            ["DepotFailed"] = "DepotDownloader завершился с ошибкой на depot {0}. Код выхода: {1}",
+            ["OutputFolderEmptyAfterDownload"] = "DepotDownloader завершился, но папка вывода пустая.",
+            ["DownloadFolderDoesNotExistCreate"] = "Папка загрузки не существует.\n\nСоздать её сейчас?",
+            ["PatchFolderDoesNotExistCreate"] = "Папка патч-файлов не существует.\n\nСоздать её сейчас?",
+            ["CreateDownloadFolder"] = "Создать папку загрузки",
+            ["CreatePatchFolder"] = "Создать папку патч-файлов",
+            ["DepotDownloaderNotFoundQuestion"] = "DepotDownloader.exe не найден.\n\nСкачать последнюю версию автоматически?",
+            ["DownloadDepotDownloaderTitle"] = "Скачать DepotDownloader",
+            ["WelcomeLog"] = "Добро пожаловать в EternalDownpatcher.",
+            ["SelectVersionLog"] = "Выберите версию вручную.",
+            ["SelectRootFolderLog"] = "Выберите папку DOOM Eternal.",
+            ["WorkingFolderLog"] = "Рабочая папка: {0}",
+            ["DefaultPatchFolderLog"] = "Папка патч-файлов по умолчанию: {0}",
+            ["ClickHelpLog"] = "Нажмите Help для инструкции.",
+            ["LoadedVersionsLog"] = "Загружено версий: {0}",
+            ["VersionsSourceLog"] = "Источник версий: {0}",
+            ["VersionLog"] = "Версия EternalDownpatcher: {0}"
+        };
+
+        Dictionary<string, string> es = new()
+        {
+            ["SelectGameFolder"] = "Seleccionar carpeta de DOOM Eternal",
+            ["GameVersion"] = "Versión del juego *",
+            ["SteamUsername"] = "Usuario de Steam *",
+            ["SteamPassword"] = "Contraseña de Steam *",
+            ["DownloadAllFiles"] = "Descargar todos los archivos",
+            ["ValidateFiles"] = "Validar archivos",
+            ["OutputLog"] = "Registro",
+            ["CopyLog"] = "Copiar registro",
+            ["Browse"] = "Examinar",
+            ["RestoreBackup"] = "Restaurar copia",
+            ["OpenFolder"] = "Abrir carpeta",
+            ["Download"] = "Descargar",
+            ["Downpatch"] = "Aplicar downgrade",
+            ["DownloadFolder"] = "Carpeta de descarga",
+            ["PatchFilesFolder"] = "Carpeta de archivos",
+            ["RequiredFieldsMissing"] = "* Faltan campos obligatorios",
+            ["RootNotSelected"] = "No se ha seleccionado la carpeta raíz de DOOM Eternal.",
+            ["DownloadAllFilesStatus"] = "Modo Download All Files: no se necesita la carpeta raíz de DOOM Eternal.",
+            ["RootSelected"] = "Carpeta seleccionada. Versión instalada: {0}",
+            ["Ready"] = "Listo",
+            ["InvalidDoomRootFolderShort"] = "Carpeta de DOOM Eternal no válida.",
+            ["RootSelectedButVersionNotDetected"] = "Carpeta seleccionada, pero no se detectó la versión.",
+            ["OutputFolderDoesNotExist"] = "La carpeta de salida no existe.",
+            ["InvalidDoomRootFolder"] = "La carpeta seleccionada de DOOM Eternal no es válida. Debe contener DOOMEternalx64vk.exe.",
+            ["SelectedTargetFolderInvalid"] = "La carpeta de destino seleccionada no es una carpeta válida de DOOM Eternal.",
+            ["BackupFolderInvalid"] = "La carpeta de copia de seguridad seleccionada está vacía o no es válida.",
+            ["RestoreBackupFailed"] = "No se pudo restaurar la copia de seguridad: {0}",
+            ["VersionsJsonNotFound"] = "No se encontró data\\versions.json.",
+            ["LoadVersionsFailed"] = "No se pudo cargar versions.json: {0}",
+            ["SelectedVersionInvalid"] = "La versión seleccionada no es válida.",
+            ["InvalidManifestData"] = "La versión seleccionada tiene datos de manifest no válidos.",
+            ["InstalledVersionNotDetected"] = "No se detectó la versión instalada de DOOM Eternal.",
+            ["UnableCompareVersions"] = "No se pudo comparar la versión seleccionada con la versión instalada.",
+            ["TargetMustBeOlder"] = "La versión seleccionada para el downpatch debe ser más antigua que la versión instalada.",
+            ["GenerateFilelistFailed"] = "No se pudo generar el filelist: {0}",
+            ["PatchFolderSameAsGame"] = "La carpeta de archivos del parche y la carpeta de DOOM Eternal no pueden ser la misma.",
+            ["DoomFolderInsidePatchFolder"] = "La carpeta de DOOM Eternal no puede estar dentro de la carpeta de archivos del parche.",
+            ["DownloadFolderIsDoomRoot"] = "La carpeta de descarga no puede ser una carpeta existente de DOOM Eternal. Elige una carpeta separada y vacía.",
+            ["DownloadFolderSameAsRoot"] = "La carpeta de descarga no puede ser la carpeta seleccionada de DOOM Eternal.",
+            ["DepotDownloaderPrepareFailed"] = "No se pudo preparar DepotDownloader: {0}",
+            ["RequiredFieldsLog"] = "Completa todos los campos obligatorios antes de empezar.",
+            ["MissingGameVersion"] = "versión del juego",
+            ["MissingSteamLogin"] = "usuario de Steam",
+            ["MissingSteamPassword"] = "contraseña de Steam",
+            ["MissingDoomRoot"] = "carpeta de DOOM Eternal",
+            ["MissingDownloadFolder"] = "carpeta de descarga",
+            ["MissingPatchFolder"] = "carpeta de archivos del parche",
+            ["MissingPrefix"] = "* Faltan: {0}",
+            ["InvalidFolderNoExe"] = "La carpeta seleccionada no contiene DOOMEternalx64vk.exe.",
+            ["DetectVersionFailed"] = "No se pudo detectar la versión instalada de DOOM Eternal por el tamaño de DOOMEternalx64vk.exe.",
+            ["DepotFailed"] = "DepotDownloader falló en el depot {0}. Código de salida: {1}",
+            ["OutputFolderEmptyAfterDownload"] = "DepotDownloader terminó, pero la carpeta de salida está vacía.",
+            ["DownloadFolderDoesNotExistCreate"] = "La carpeta de descarga no existe.\n\n¿Crearla ahora?",
+            ["PatchFolderDoesNotExistCreate"] = "La carpeta de archivos del parche no existe.\n\n¿Crearla ahora?",
+            ["CreateDownloadFolder"] = "Crear carpeta de descarga",
+            ["CreatePatchFolder"] = "Crear carpeta de archivos del parche",
+            ["DepotDownloaderNotFoundQuestion"] = "No se encontró DepotDownloader.exe.\n\n¿Descargar automáticamente la versión más reciente?",
+            ["DownloadDepotDownloaderTitle"] = "Descargar DepotDownloader",
+            ["WelcomeLog"] = "Bienvenido a EternalDownpatcher.",
+            ["SelectVersionLog"] = "Selecciona una versión manualmente.",
+            ["SelectRootFolderLog"] = "Selecciona la carpeta de DOOM Eternal.",
+            ["WorkingFolderLog"] = "Carpeta de trabajo: {0}",
+            ["DefaultPatchFolderLog"] = "Carpeta predeterminada de archivos del parche: {0}",
+            ["ClickHelpLog"] = "Haz clic en Help para ver las instrucciones.",
+            ["LoadedVersionsLog"] = "Versiones cargadas: {0}",
+            ["VersionsSourceLog"] = "Fuente de versiones: {0}",
+            ["VersionLog"] = "Versión de EternalDownpatcher: {0}"
+        };
+
+        Dictionary<string, string> selected = language.ToLowerInvariant() switch
+        {
+            "ru" => ru,
+            "es" => es,
+            _ => en
+        };
+
+        if (selected.TryGetValue(key, out string? value))
+        {
+            return value;
+        }
+
+        if (en.TryGetValue(key, out string? fallbackValue))
+{
+    return fallbackValue;
+}
+
+return key;
     }
 
     private sealed record DownpatchVersion(
