@@ -2,20 +2,27 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace EternalDownpatcher.WinForms;
 
 public sealed class SettingsForm : Form
 {
+    #region Window
+
     private readonly Panel _contentPanel = new();
     private readonly Button _languageTabButton = new();
+    private readonly Button _steamTabButton = new();
     private readonly Button _infoTabButton = new();
     private readonly ComboBox _languageComboBox = new();
+    private readonly CheckBox _rememberLoginCheckBox = new();
+    private readonly CheckBox _rememberPasswordCheckBox = new();
     private readonly Button _okButton = new();
     private readonly Button _cancelButton = new();
 
     private readonly bool _darkMode;
+    private readonly Func<string, string, bool> _confirmPasswordSaving;
     private string _currentPage = "language";
 
     private Color _back;
@@ -28,10 +35,21 @@ public sealed class SettingsForm : Form
     private Color _link;
 
     public string SelectedLanguage { get; private set; }
+    public bool RememberLogin { get; private set; }
+    public bool RememberPassword { get; private set; }
 
-    public SettingsForm(UserSettings settings)
+    public SettingsForm(UserSettings settings) : this(settings, null)
+    {
+    }
+
+    internal SettingsForm(UserSettings settings, Func<string, string, bool>? confirmPasswordSaving)
     {
         _darkMode = settings.DarkMode;
+        RememberLogin = settings.RememberLogin;
+        RememberPassword = settings.RememberPassword;
+        _confirmPasswordSaving = confirmPasswordSaving ?? ((message, title) =>
+            MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2) == DialogResult.Yes);
         SelectedLanguage = string.IsNullOrWhiteSpace(settings.Language)
             ? "en"
             : settings.Language;
@@ -47,6 +65,7 @@ public sealed class SettingsForm : Form
         AutoScaleMode = AutoScaleMode.Dpi;
 
         SetColors();
+        InitializeSocialIcons();
         BuildInterface();
         ApplyLanguage();
         ShowLanguagePage();
@@ -83,14 +102,33 @@ public sealed class SettingsForm : Form
         _languageTabButton.SetBounds(10, 8, 95, 28);
         _languageTabButton.Click += (_, _) => ShowLanguagePage();
 
-        _infoTabButton.SetBounds(108, 8, 70, 28);
+        _steamTabButton.SetBounds(108, 8, 95, 28);
+        _steamTabButton.Click += (_, _) => ShowSteamPage();
+        _infoTabButton.SetBounds(206, 8, 70, 28);
         _infoTabButton.Click += (_, _) => ShowInfoPage();
 
         StyleButton(_languageTabButton, false);
+        StyleButton(_steamTabButton, false);
         StyleButton(_infoTabButton, false);
 
         topPanel.Controls.Add(_languageTabButton);
+        topPanel.Controls.Add(_steamTabButton);
         topPanel.Controls.Add(_infoTabButton);
+
+        foreach (CheckBox checkBox in new[] { _rememberLoginCheckBox, _rememberPasswordCheckBox })
+        {
+            checkBox.BackColor = _panel;
+            checkBox.ForeColor = _text;
+            checkBox.Font = new Font(Font, FontStyle.Bold);
+            checkBox.FlatStyle = FlatStyle.Flat;
+            checkBox.Cursor = Cursors.Hand;
+            checkBox.Paint += (_, e) => MainForm.PaintCheckBox(checkBox, e.Graphics, prominent: true);
+        }
+        // Restore saved choices before subscribing, so opening Settings never prompts.
+        _rememberLoginCheckBox.Checked = RememberLogin;
+        _rememberPasswordCheckBox.Checked = RememberPassword;
+        _rememberLoginCheckBox.CheckedChanged += (_, _) => RememberLogin = _rememberLoginCheckBox.Checked;
+        _rememberPasswordCheckBox.CheckedChanged += RememberPasswordCheckBox_CheckedChanged;
 
         Panel bottomPanel = new()
         {
@@ -138,9 +176,10 @@ public sealed class SettingsForm : Form
     private void ShowLanguagePage()
     {
         _currentPage = "language";
-        _contentPanel.Controls.Clear();
+        ClearContentPage();
 
         StyleButton(_languageTabButton, true);
+        StyleButton(_steamTabButton, false);
         StyleButton(_infoTabButton, false);
 
         Label languageLabel = new()
@@ -198,17 +237,59 @@ public sealed class SettingsForm : Form
         _contentPanel.Controls.Add(noteLabel);
     }
 
+    private void ShowSteamPage()
+    {
+        _currentPage = "steam";
+        ClearContentPage();
+        StyleButton(_languageTabButton, false);
+        StyleButton(_steamTabButton, true);
+        StyleButton(_infoTabButton, false);
+
+        Label heading = new()
+        {
+            Text = T("SteamSignIn"),
+            ForeColor = _text,
+            BackColor = _panel,
+            Font = new Font(Font, FontStyle.Bold)
+        };
+        heading.SetBounds(20, 18, 400, 24);
+        _rememberLoginCheckBox.Text = T("RememberLogin");
+        _rememberLoginCheckBox.SetBounds(20, 54, 400, 34);
+        _rememberPasswordCheckBox.Text = T("RememberPassword");
+        _rememberPasswordCheckBox.SetBounds(20, 94, 400, 34);
+        Label note = new()
+        {
+            Text = T("RememberSteamNote"),
+            ForeColor = _text,
+            BackColor = _panel
+        };
+        note.SetBounds(20, 146, 400, 60);
+        _contentPanel.Controls.Add(heading);
+        _contentPanel.Controls.Add(_rememberLoginCheckBox);
+        _contentPanel.Controls.Add(_rememberPasswordCheckBox);
+        _contentPanel.Controls.Add(note);
+    }
+
+    private void RememberPasswordCheckBox_CheckedChanged(object? sender, EventArgs e)
+    {
+        if (_rememberPasswordCheckBox.Checked &&
+            !_confirmPasswordSaving(T("RememberPasswordWarning"), T("RememberPasswordWarningTitle")))
+            _rememberPasswordCheckBox.Checked = false;
+        RememberPassword = _rememberPasswordCheckBox.Checked;
+    }
+
     private void ShowInfoPage()
     {
         _currentPage = "info";
-        _contentPanel.Controls.Clear();
+        ClearContentPage();
 
         StyleButton(_languageTabButton, false);
+        StyleButton(_steamTabButton, false);
         StyleButton(_infoTabButton, true);
 
         Label versionLabel = new()
         {
-            Text = T("DepotDownloaderVersion"),
+            Text = $"EternalDownpatcher {MainForm.AppVersion} (the best version!)",
             AutoSize = false,
             ForeColor = _text,
             BackColor = _panel,
@@ -217,25 +298,13 @@ public sealed class SettingsForm : Form
 
         versionLabel.SetBounds(20, 18, 360, 24);
 
-        LinkLabel githubLink = new()
-        {
-            Text = "GitHub",
-            AutoSize = false,
-            BackColor = _panel,
-            LinkColor = _link,
-            ActiveLinkColor = Color.FromArgb(120, 190, 255),
-            VisitedLinkColor = _link
-        };
-
-        githubLink.SetBounds(20, 58, 180, 24);
-        githubLink.LinkClicked += (_, _) =>
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "https://github.com/mrshadowq5/EternalDownpatcher",
-                UseShellExecute = true
-            });
-        };
+        Control githubLink = CreateSocialLink(
+            Random.Shared.Next(1000) < 8
+            ? "claim your 3000 robux here"
+            : "GitHub repo",
+            "https://github.com/mrshadowq5/EternalDownpatcher",
+            _githubLogo,
+            58);
 
         Label helpLabel = new()
         {
@@ -247,25 +316,11 @@ public sealed class SettingsForm : Form
 
         helpLabel.SetBounds(20, 98, 390, 48);
 
-        LinkLabel modernDoomLink = new()
-        {
-            Text = "Modern DOOM Speedrunning",
-            AutoSize = false,
-            BackColor = _panel,
-            LinkColor = _link,
-            ActiveLinkColor = Color.FromArgb(120, 190, 255),
-            VisitedLinkColor = _link
-        };
-
-        modernDoomLink.SetBounds(20, 154, 240, 24);
-        modernDoomLink.LinkClicked += (_, _) =>
-        {
-            Process.Start(new ProcessStartInfo
-            {
-                FileName = "https://discord.gg/dtDa9VZ",
-                UseShellExecute = true
-            });
-        };
+        Control mdsr = CreateSocialLink(
+            "MDSR discord",
+            "https://discord.gg/dtDa9VZ",
+            _discordLogo,
+            154);
 
         Label contactLabel = new()
         {
@@ -290,7 +345,7 @@ public sealed class SettingsForm : Form
         _contentPanel.Controls.Add(versionLabel);
         _contentPanel.Controls.Add(githubLink);
         _contentPanel.Controls.Add(helpLabel);
-        _contentPanel.Controls.Add(modernDoomLink);
+        _contentPanel.Controls.Add(mdsr);
         _contentPanel.Controls.Add(contactLabel);
         _contentPanel.Controls.Add(madeByLabel);
     }
@@ -309,6 +364,10 @@ public sealed class SettingsForm : Form
         {
             ShowLanguagePage();
         }
+        else if (_currentPage == "steam")
+        {
+            ShowSteamPage();
+        }
         else
         {
             ShowInfoPage();
@@ -319,6 +378,7 @@ public sealed class SettingsForm : Form
     {
         Text = T("Settings");
         _languageTabButton.Text = T("Language");
+        _steamTabButton.Text = "Credentials";
         _infoTabButton.Text = T("Info");
         _okButton.Text = "OK";
         _cancelButton.Text = T("Cancel");
@@ -356,10 +416,12 @@ public sealed class SettingsForm : Form
             ["Info"] = "Info",
             ["Cancel"] = "Cancel",
             ["ApplicationLanguage"] = "Application language",
+            ["SteamSignIn"] = "Steam sign-in",
+            ["RememberSteamNote"] = "Choose what to restore next time. Turn an option off and click OK to remove its saved data.",
             ["DefaultLanguageNote"] = "English is the default language.",
             ["DepotDownloaderVersion"] = "DepotDownloader version 1.2",
-            ["HelpText"] = "If you run into a problem using EternalDownpatcher, request help on Modern DOOM Speedrunning Discord.",
-            ["Contact"] = "Contact: stonedealer05 on Discord",
+            ["HelpText"] = "If you run into a problem or a bug using Downpatcher, request help on MDSR Discord or ping/DM me if needed.",
+            ["Contact"] = "Contact: mr.shadowq5 on Discord",
             ["MadeBy"] = "Made by mrshadowq5"
         };
 
@@ -370,10 +432,12 @@ public sealed class SettingsForm : Form
             ["Info"] = "Инфо",
             ["Cancel"] = "Отмена",
             ["ApplicationLanguage"] = "Язык приложения",
+            ["SteamSignIn"] = "Вход в Steam",
+            ["RememberSteamNote"] = "Выберите, что подставлять при следующем запуске. Снятие галочки и нажатие OK удалит сохранённые данные.",
             ["DefaultLanguageNote"] = "Английский язык используется по умолчанию.",
             ["DepotDownloaderVersion"] = "Версия DepotDownloader: 1.2",
-            ["HelpText"] = "Если у вас возникла проблема с EternalDownpatcher, напишите в Modern DOOM Speedrunning Discord.",
-            ["Contact"] = "Контакт: stonedealer05 в Discord",
+            ["HelpText"] = "Если у вас возникла проблема или вы столкнулись с багом, напишите в Modern DOOM Speedrunning Discord или пинганите/напишите мне в лс.",
+            ["Contact"] = "Связаться со мной: mr.shadowq5 в Дискорде. Меня нет в МАКС.",
             ["MadeBy"] = "Шел второй день без игры в роблокс, у меня начались ломки."
         };
 
@@ -384,10 +448,12 @@ public sealed class SettingsForm : Form
             ["Info"] = "Info",
             ["Cancel"] = "Cancelar",
             ["ApplicationLanguage"] = "Idioma de la aplicación",
+            ["SteamSignIn"] = "Acceso a Steam",
+            ["RememberSteamNote"] = "Elige qué recordar al iniciar de nuevo. Desactiva una opción y pulsa OK para eliminar sus datos guardados.",
             ["DefaultLanguageNote"] = "El inglés es el idioma predeterminado.",
             ["DepotDownloaderVersion"] = "Versión de DepotDownloader: 1.2",
-            ["HelpText"] = "Si tienes un problema con EternalDownpatcher, pide ayuda en el Discord de Modern DOOM Speedrunning.",
-            ["Contact"] = "Contacto: stonedealer05 en Discord",
+            ["HelpText"] = "Si tienes un problema con EternalDownpatcher, pide ayuda en el Discord de Modern DOOM Speedrunning)",
+            ["Contact"] = "Contacto: mr.shadowq5 en Discord",
             ["MadeBy"] = "Hecho por mrshadowq5"
         };
 
@@ -403,7 +469,7 @@ public sealed class SettingsForm : Form
             return value;
         }
 
-        return en[key];
+        return en.TryGetValue(key, out string? fallback) ? fallback : MainForm.T(SelectedLanguage, key);
     }
 
     private sealed class LanguageItem
@@ -422,4 +488,112 @@ public sealed class SettingsForm : Form
             return Name;
         }
     }
+
+    #endregion
+
+    #region Links and logos
+
+    private Image? _githubLogo;
+    private Image? _discordLogo;
+
+    private void InitializeSocialIcons()
+    {
+        _githubLogo = TryLoadSocialIcon(_darkMode ? "github-white.png" : "github-black.png");
+        _discordLogo = TryLoadSocialIcon("verify_your_age.png");
+    }
+
+    private static Image? TryLoadSocialIcon(string fileName)
+    {
+        try
+        {
+            string path = Path.Combine(AppContext.BaseDirectory, "assets", fileName);
+            using Image source = Image.FromFile(path);
+            // Copy the image so the PNG file does not stay locked while settings are open.
+            return new Bitmap(source);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ArgumentException or OutOfMemoryException)
+        {
+            // The link remains usable if optional artwork is missing or unreadable.
+            return null;
+        }
+    }
+
+    private Control CreateSocialLink(string text, string url, Image? logo, int top)
+    {
+        const int iconSize = 32;
+        const int iconGap = 8;
+
+        Panel row = new() { BackColor = _panel };
+        row.SetBounds(20, top, 390, iconSize + 4);
+
+        void OpenLink() => Process.Start(new ProcessStartInfo
+        {
+            FileName = url,
+            UseShellExecute = true
+        });
+
+        if (logo is not null)
+        {
+            PictureBox icon = new()
+            {
+                Image = logo,
+                SizeMode = PictureBoxSizeMode.Zoom,
+                BackColor = _panel,
+                Cursor = Cursors.Hand,
+                TabStop = false
+            };
+            icon.SetBounds(0, 2, iconSize, iconSize);
+            icon.Click += (_, _) => OpenLink();
+            row.Controls.Add(icon);
+        }
+
+        LinkLabel link = new()
+        {
+            Text = text,
+            AutoSize = false,
+            TextAlign = ContentAlignment.MiddleLeft,
+            BackColor = _panel,
+            LinkColor = _link,
+            ActiveLinkColor = Color.FromArgb(120, 190, 255),
+            VisitedLinkColor = _link
+        };
+        int textLeft = logo is null ? 0 : iconSize + iconGap;
+        link.SetBounds(textLeft, 0, row.Width - textLeft, row.Height);
+        link.LinkClicked += (_, _) => OpenLink();
+        row.Controls.Add(link);
+        return row;
+    }
+
+    private void ClearContentPage()
+    {
+        while (_contentPanel.Controls.Count > 0)
+        {
+            Control control = _contentPanel.Controls[0];
+            _contentPanel.Controls.Remove(control);
+            // Keep input controls alive while switching between Settings pages.
+            if (!ReferenceEquals(control, _languageComboBox) &&
+                !ReferenceEquals(control, _rememberLoginCheckBox) &&
+                !ReferenceEquals(control, _rememberPasswordCheckBox))
+            {
+                control.Dispose();
+            }
+        }
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        if (disposing)
+        {
+            _languageComboBox.Dispose();
+            _rememberLoginCheckBox.Dispose();
+            _rememberPasswordCheckBox.Dispose();
+            _githubLogo?.Dispose();
+            _discordLogo?.Dispose();
+            _githubLogo = null;
+            _discordLogo = null;
+        }
+    }
+
+    #endregion
 }
