@@ -1,4 +1,4 @@
-# EternalDownpatcher — User guide
+# EternalDownpatcher User guide or something
 
 [English](DOCUMENTATION.md) · [Русский](ru/DOCUMENTATION-RU.md) · [Español](es/DOCUMENTATION-ES.md)
 
