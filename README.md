@@ -16,7 +16,7 @@ You must own [DOOM Eternal](https://store.steampowered.com/app/782330/DOOM_Etern
 
 ## User guide
 
-Read the full guide: **[English](docs/DOCUMENTATION.md)** · **[Русский](docs/ru/DOCUMENTATION.md)** · **[Español](docs/es/DOCUMENTATION.md)**.
+Read the full guide: **[English](docs/DOCUMENTATION.md)** · **[Русский](docs/ru/DOCUMENTATION-RU.md)** · **[Español](docs/es/DOCUMENTATION-ES.md)**.
 
 - **[Separate copy](docs/DOCUMENTATION.md#separate):** select **Download All Files** (the default mode) to download a complete version into an empty folder. An existing installation is not required.
 - **[Existing installation](docs/DOCUMENTATION.md#existing):** select **Downpatch** to downpatch a recognized installation. Patch files are applied automatically after downloading, with a backup created first.
