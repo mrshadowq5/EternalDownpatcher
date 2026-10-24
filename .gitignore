@@ -8,6 +8,7 @@ obj/
 DOWNPATCH_FILES/
 DepotDownloader.exe
 depotdownloader*/
+.DepotDownloader-*/
 *.zip
 
 EternalDownpatcher_Backup_*/
@@ -19,3 +20,4 @@ Debug/
 appsettings.local.json
 *.tmp
 filelist.txt
+account.config
