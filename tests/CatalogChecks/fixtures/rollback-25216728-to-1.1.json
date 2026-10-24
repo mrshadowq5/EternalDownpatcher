@@ -1,0 +1,2194 @@
+{
+  "sourceManifestIds": [
+    "2367662674907098364",
+    "2893512595648799481",
+    "8272489020521907930",
+    "4277233946804126868",
+    "7701371671209160942",
+    "7595167059955801744",
+    "8642366102070535855",
+    "963513668557023129"
+  ],
+  "targetManifestIds": [
+    "3892274199857968095",
+    "6420993562550722180",
+    "3205602095215184953",
+    "8524323223278846332",
+    "1471866554760810506",
+    "122337607158713695",
+    "4899404039317730890",
+    "2370815199958118903"
+  ],
+  "manifestEvidence": [
+    {
+      "depot": 782332,
+      "targetManifest": "3892274199857968095",
+      "sourceManifest": "2367662674907098364",
+      "sourceManifestSha256": "7458cefd741f009659e381aa52f50105ecac13a5d7b7ea01fb3096c23236702b",
+      "targetManifestSha256": "fd41b04d08a2d8f36077d4fa502801b39a6be9c807061d196a612db57038e688"
+    },
+    {
+      "depot": 782333,
+      "targetManifest": "6420993562550722180",
+      "sourceManifest": "2893512595648799481",
+      "sourceManifestSha256": "cf95a8e0644351fedbcdc864e751c99222034ab647f0e81d080513f972369026",
+      "targetManifestSha256": "f6ba6ede377f22d52fff41ae546a9d1af57571ce091bdfe16ca52f2785651960"
+    },
+    {
+      "depot": 782334,
+      "targetManifest": "3205602095215184953",
+      "sourceManifest": "8272489020521907930",
+      "sourceManifestSha256": "72f7571a2d0d3113f77ac8f63c062a6cf892e4f825977040fc7d4a6a28de45b7",
+      "targetManifestSha256": "e02750874e3edddd251343a80ef2b74e16285d1790372ae3b21ac4332cad4431"
+    },
+    {
+      "depot": 782335,
+      "targetManifest": "8524323223278846332",
+      "sourceManifest": "4277233946804126868",
+      "sourceManifestSha256": "e24b368fc34869fe7fdb42e1757edd46b95eacf459ab2213f2f30330c05945d4",
+      "targetManifestSha256": "6f14aa099b92beb14de9813746ff314faeb4b7b52ff60cc68081508e8e58d5e8"
+    },
+    {
+      "depot": 782336,
+      "targetManifest": "1471866554760810506",
+      "sourceManifest": "7701371671209160942",
+      "sourceManifestSha256": "4bbc1943777c87a561e0b451501d9c4abc226e95355f7f86040cb882c0c00ef3",
+      "targetManifestSha256": "036951ed70f9b8aa92492787886678fa7fc3c2309e208b553b0b7ff5f5c1479e"
+    },
+    {
+      "depot": 782337,
+      "targetManifest": "122337607158713695",
+      "sourceManifest": "7595167059955801744",
+      "sourceManifestSha256": "91c778ddbd1b05d7f6df3a94b5411bdf611cea18cc373559e313da39efebcb1c",
+      "targetManifestSha256": "c0008a12de10116650a4689be92fa674da534070c3248fcf86c597e44eca502b"
+    },
+    {
+      "depot": 782338,
+      "targetManifest": "4899404039317730890",
+      "sourceManifest": "8642366102070535855",
+      "sourceManifestSha256": "43e5fffe05bd960573622e3046891c468a81505995415446a79409e6b71f908d",
+      "targetManifestSha256": "1edf05ea6460756d98f21125a6d37d1eed8b8e524740a85e9d90da61f9edcaff"
+    },
+    {
+      "depot": 782339,
+      "targetManifest": "2370815199958118903",
+      "sourceManifest": "963513668557023129",
+      "sourceManifestSha256": "6793b7284306f0d98dcfd567e518f542d167348d4ec60338b1d62d2b6f7890ac",
+      "targetManifestSha256": "0e95e619e155b305f3a216d16952879d62fb0410d5d7a2209ee118e74e55ebdd"
+    }
+  ],
+  "files": [
+    {
+      "depot": 782332,
+      "path": "bink2w64.dll",
+      "targetSize": 391360,
+      "targetSha1": "b87186c17b2ab472c2d8987751f4c56ec7999470",
+      "sourceSize": 406176,
+      "sourceSha1": "e5ba9b753c5647086aa604431a8edc9a4be99eb8"
+    },
+    {
+      "depot": 782332,
+      "path": "dbghelp.dll",
+      "targetSize": 1413072,
+      "targetSha1": "78513c5065b9f9e6849472f2a64134cd53b5a446",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782332,
+      "path": "DOOMEternalx64vk.exe",
+      "targetSize": 451225088,
+      "targetSha1": "df3b23fc7e5daf2520dfecf1850981540b3bf039",
+      "sourceSize": 77207984,
+      "sourceSha1": "4852db07a4265b7b15f92f6dfe78b20c882f545c"
+    },
+    {
+      "depot": 782332,
+      "path": "oo2core_8_win64.dll",
+      "targetSize": 1007616,
+      "targetSha1": "6953549a61985336b58d584b6ca019f01d58b66b",
+      "sourceSize": 1018296,
+      "sourceSha1": "8078c878626f4259a1165d6f554550667dd4320c"
+    },
+    {
+      "depot": 782332,
+      "path": "oo2ext_8_win64.dll",
+      "targetSize": 1209344,
+      "targetSha1": "a0538e33987504794b82b6a30d13fec8a3f3f056",
+      "sourceSize": 1220016,
+      "sourceSha1": "f648cd47ba01a1186d86ff384ab854d4ce5b5443"
+    },
+    {
+      "depot": 782332,
+      "path": "PartyWin.dll",
+      "targetSize": 2497104,
+      "targetSha1": "150c2a1daf90ca51efe71cecfe71dee71983be40",
+      "sourceSize": 2886488,
+      "sourceSha1": "9183a1ce69fda73c6d6eca2de80b87d7f2c5b54e"
+    },
+    {
+      "depot": 782332,
+      "path": "PartyWin7.dll",
+      "targetSize": 4917112,
+      "targetSha1": "7288171beb7675a7dac6687d14a7334816b21c6a",
+      "sourceSize": 5304664,
+      "sourceSha1": "5faaa6be1918be8d825c34f99edb5a0245b94e83"
+    },
+    {
+      "depot": 782332,
+      "path": "steam_api64.dll",
+      "targetSize": 289568,
+      "targetSha1": "c4b5b00b605e59c6fdcb6731f2e53069506e287a",
+      "sourceSize": 300272,
+      "sourceSha1": "04c16559d4e2cbf520a987d295c545f0afb039bd"
+    },
+    {
+      "depot": 782332,
+      "path": "installscript.vdf",
+      "targetSize": 508,
+      "targetSha1": "a2d72e5a468e6bccf03f93079e954928b87dbdf4",
+      "sourceSize": 508,
+      "sourceSha1": "a2d72e5a468e6bccf03f93079e954928b87dbdf4"
+    },
+    {
+      "depot": 782333,
+      "path": "base/candidate.cfg",
+      "targetSize": 1000,
+      "targetSha1": "6c67ff3eb6adb700625657b73ffafe40d476032b",
+      "sourceSize": 344,
+      "sourceSha1": "db7015cdbb66becce36cd55d8d11b77221151baa"
+    },
+    {
+      "depot": 782333,
+      "path": "base/disclayout.cfg",
+      "targetSize": 56,
+      "targetSha1": "2f518959388244c45f2fd46734c8e79248cb1f57",
+      "sourceSize": 57,
+      "sourceSha1": "487ff15085605bbbf8b7336e2b2c684f066edb54"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/mus.pck",
+      "targetSize": 411691,
+      "targetSha1": "e47b7df8d5b76c0bb20c6402c604d74efd976fe7",
+      "sourceSize": 558930,
+      "sourceSha1": "6d5e1e798b634c9ac34b956b4222b82de059da72"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/music.snd",
+      "targetSize": 1545930002,
+      "targetSha1": "6657311af89a3be9913da83be484b60fb5fabb78",
+      "sourceSize": 1848309765,
+      "sourceSha1": "d0687c862377a0cbd0a2ef5aa34cb9386408c772"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/sfx.pck",
+      "targetSize": 1251031,
+      "targetSha1": "c06401875723874930e8a0420f6db24b6bf1b42a",
+      "sourceSize": 1563628,
+      "sourceSha1": "df255411467f14d4b23421f6465eaa180573646d"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/sfx_patch_1.snd",
+      "targetSize": 223158,
+      "targetSha1": "a433164bf1783c4968b72c43df00b8ac1b15c3bc",
+      "sourceSize": 167168869,
+      "sourceSha1": "f4fc098daecd250a6778e2093487e6bc85043102"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/soundmetadata.bin",
+      "targetSize": 531919,
+      "targetSha1": "231564dd3c3b8ac6dd62cf7398e7d5077a6c1502",
+      "sourceSize": 615240,
+      "sourceSha1": "f38afa9c530f3f20777bbd32acc4df530ca0e8c4"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_English(US).snd",
+      "targetSize": 776024634,
+      "targetSha1": "19e22995271dadc2bddc4bd066cb64d470281dde",
+      "sourceSize": 44371857,
+      "sourceSha1": "2f73a133e4e1f890b4b826dc4e888ec87d20078f"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_English(US)_patch_1.snd",
+      "targetSize": 10543280,
+      "targetSha1": "0201c97fded0a966d05a3039311188d4c12a8ffb",
+      "sourceSize": 6540301,
+      "sourceSha1": "73aac2562aefa58c9831185a8967134f0a13752a"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_english.pck",
+      "targetSize": 594040,
+      "targetSha1": "72c226e31c4093451a24d080afda6d5f6c922344",
+      "sourceSize": 510563,
+      "sourceSha1": "ce204bf370fd403bd62c35abd63d155291ea8ad5"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_French(France).snd",
+      "targetSize": 720309432,
+      "targetSha1": "15ac8b7cc9f36a327118694f815ec14f809c7988",
+      "sourceSize": 42522401,
+      "sourceSha1": "da6e42b5a4ec65ccccaa03284823eb6ca8c3e1ec"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_french.pck",
+      "targetSize": 584448,
+      "targetSha1": "ecb2124c3e897d87a1d9e80be59cce8ffcb63844",
+      "sourceSize": 500971,
+      "sourceSha1": "56e94f3c2efb69f6051764092c0dbf9f001c87b7"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_german.pck",
+      "targetSize": 584432,
+      "targetSha1": "2ee8aca0d8fb7f779cb6cf8ac9b5cc51832f4d3a",
+      "sourceSize": 500955,
+      "sourceSha1": "bb9f7d2d0600e2d2f2d5bf6fb989ddeb2799171a"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_German.snd",
+      "targetSize": 744087644,
+      "targetSha1": "70ac74154ca8a0ca4c3670b44bfaa15d29ab21af",
+      "sourceSize": 43580135,
+      "sourceSha1": "dd4e7918bd53da6fba025809d14edfea86195241"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_italian.pck",
+      "targetSize": 584432,
+      "targetSha1": "18b6886292f274bc1c109640b8cb24902f451493",
+      "sourceSize": 500955,
+      "sourceSha1": "67b2f35684ca0ec08aa8c2d028b11d3d7c21f50d"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_Italian.snd",
+      "targetSize": 726349028,
+      "targetSha1": "d8c14e55035200bf71b61637526215ea16c8f9a5",
+      "sourceSize": 43138532,
+      "sourceSha1": "587ea2ce05acea47f7766fcbb0b1af644c474b2f"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_japanese.pck",
+      "targetSize": 584436,
+      "targetSha1": "e947d1cac787a8344348b0b4bddd4a5619a9f9ae",
+      "sourceSize": 500959,
+      "sourceSha1": "84db763bdb103ff63d1fbe6307228e9168db00b7"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_Japanese.snd",
+      "targetSize": 728840996,
+      "targetSha1": "e1d431a5d702fb01a64f183520bbe27453df4ffa",
+      "sourceSize": 43395252,
+      "sourceSha1": "8a92d77d2ff2ad2be095f2d0d451b2778ce1b71c"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_Japanese_patch_1.snd",
+      "targetSize": 8030704,
+      "targetSha1": "ba27efbeac784dd00f55b08ff1ff9b89ce03e886",
+      "sourceSize": 6603615,
+      "sourceSha1": "6998f42658b9d14640b0dcb6eb800159dcd971ca"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_latin_spanish.pck",
+      "targetSize": 584448,
+      "targetSha1": "5441e8fa011ea15ff434e4564d4c241ba892af25",
+      "sourceSize": 500971,
+      "sourceSha1": "419291f1b59039d4bbdf74834c123e67e6c7e4dd"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_polish.pck",
+      "targetSize": 584432,
+      "targetSha1": "cc035ac16f5f32eb0bcef8057fda354b1307c691",
+      "sourceSize": 500955,
+      "sourceSha1": "09e7754e9b1c52ca2bed2a846c7099cc920fa054"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_Polish.snd",
+      "targetSize": 727627388,
+      "targetSha1": "a52ec6e0ea1ee9946171565d23e546481e3ab66b",
+      "sourceSize": 43039848,
+      "sourceSha1": "251d18a24ba3a1b4a05d3d27e3d2bdfe24782d4e"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_Portuguese(Brazil).snd",
+      "targetSize": 741972032,
+      "targetSha1": "e719590e1f96a676af92a041e825dcc6d366abea",
+      "sourceSize": 44193459,
+      "sourceSha1": "71e161aed59c60fcac44bb8bb25b5c6248712202"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_portuguese.pck",
+      "targetSize": 584456,
+      "targetSha1": "51fa2ece80a545964bd3ce2ca80cb96a69a57a9c",
+      "sourceSize": 500979,
+      "sourceSha1": "a867af4cbb33b5d850cfef2f25bd96e5acd7e379"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_russian.pck",
+      "targetSize": 584432,
+      "targetSha1": "b107c9753d87023e6f257197671fcea83142e4ef",
+      "sourceSize": 500955,
+      "sourceSha1": "01590b0ba8bb090bf33ae4ac5a5d8066854ce03e"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_Russian.snd",
+      "targetSize": 732544256,
+      "targetSha1": "05970389c5aead430bf58cbdb3d0aa3dd750cdad",
+      "sourceSize": 43149621,
+      "sourceSha1": "fd9b57856b93918c65e69c9a22806cdfe5d2c7c2"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_Spanish(Mexico).snd",
+      "targetSize": 727650120,
+      "targetSha1": "f7a9e7404dfe2c59cb30bb1ee5080f2435fafa53",
+      "sourceSize": 42776232,
+      "sourceSha1": "6d8c032e3320f5da35ccfdb3e7a71bcaa0bea0f0"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_Spanish(Spain).snd",
+      "targetSize": 721931404,
+      "targetSha1": "d1fdda6fa68468de60d1b24341b4eb20212ca6ec",
+      "sourceSize": 42863251,
+      "sourceSha1": "7645a7f3c55fdf545b2d8a7ae879c4ed1cf1a9ff"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/vo_spanish.pck",
+      "targetSize": 584448,
+      "targetSha1": "a49de6c4adcb4c7942172174bbbe975e71370595",
+      "sourceSize": 500971,
+      "sourceSha1": "ba0357c50ce03bd4a08ebc566fb8e18d6a89e6bd"
+    },
+    {
+      "depot": 782334,
+      "path": "base/sound/soundbanks/pc/sfx.snd",
+      "targetSize": 277348012,
+      "targetSha1": "546fb35f44190918967b32f9ed9a5f5f44730979",
+      "sourceSize": 277348012,
+      "sourceSha1": "546fb35f44190918967b32f9ed9a5f5f44730979"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/boot_sequence/Boot_Sequence.bk2",
+      "targetSize": 21385816,
+      "targetSha1": "3cf9ed56981d39fdab960e7da7df9ba683197188",
+      "sourceSize": 16435564,
+      "sourceSha1": "872a37c9253d6bc2dc8289ffbc531c4ce48618d7"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/cineractive/e1m1_intro/first_priest_death/first_priest_death_vision.bk2",
+      "targetSize": 4719780,
+      "targetSha1": "a761f23f555daae7a7e967d8102a624de67f26df",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_double_jump.bk2",
+      "targetSize": 1204336,
+      "targetSha1": "719ee8da3271226a6e20aa6bc088e0c031b228a5",
+      "sourceSize": 937292,
+      "sourceSha1": "d7b7ddbec7113c8d39a10d620552a8860350f205"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_boosters.bk2",
+      "targetSize": 1534788,
+      "targetSha1": "9f7719fc06f91523d57e36514189838db07187fd",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weak_point_mancubus.bk2",
+      "targetSize": 10172960,
+      "targetSha1": "2ffe28ff7bf7d00007bf5eef13cc83e9661c7b72",
+      "sourceSize": 6449700,
+      "sourceSha1": "6b8485db4879b75e6eafe2d1488a9147cb2c915c"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weak_point_marauder.bk2",
+      "targetSize": 7453748,
+      "targetSha1": "5031f5691d45da4f55eae5cac81f3d8e48f401ac",
+      "sourceSize": 6797780,
+      "sourceSha1": "de3ea6814930f3383ec7a863f14b1b6a5030f453"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weak_point_revenant.bk2",
+      "targetSize": 9957188,
+      "targetSha1": "a25e494699650de4d343c3acdf9edd523a9fdb95",
+      "sourceSize": 4104140,
+      "sourceSha1": "d481c98883002dc05ebfd97915a18dec5365f535"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/cineractive/e1m1_intro/intro_game/DOOMLogo.bk2",
+      "targetSize": 19087832,
+      "targetSha1": "30d401799d56ef6056e67b3ffbe008dbba43da97",
+      "sourceSize": 19087832,
+      "sourceSha1": "30d401799d56ef6056e67b3ffbe008dbba43da97"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/cineractive/e1m1_intro/intro_game/doommarinesymbol_wide_fade.bk2",
+      "targetSize": 62372896,
+      "targetSha1": "a72334aac177b013c0bef68565e01954bd562726",
+      "sourceSize": 62372896,
+      "sourceSha1": "a72334aac177b013c0bef68565e01954bd562726"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/cineractive/e1m4_boss/doom_hunter_intro/doom_hunter_vision_1.bk2",
+      "targetSize": 5571380,
+      "targetSha1": "0e27e58e6e19e60fe9d6b5ce4a008678b838216a",
+      "sourceSize": 5571380,
+      "sourceSha1": "0e27e58e6e19e60fe9d6b5ce4a008678b838216a"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/cineractive/e1m4_boss/doom_hunter_intro/Vision_3.bk2",
+      "targetSize": 4792468,
+      "targetSha1": "41ab890d753bbf37e477493bafae430fb0fda4d4",
+      "sourceSize": 4792468,
+      "sourceSha1": "41ab890d753bbf37e477493bafae430fb0fda4d4"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/credits/credits.bk2",
+      "targetSize": 466784860,
+      "targetSha1": "65a3e173218467de2ceb35b146d44568018fead7",
+      "sourceSize": 466784860,
+      "sourceSha1": "65a3e173218467de2ceb35b146d44568018fead7"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/credits/credits_tag.bk2",
+      "targetSize": 33749508,
+      "targetSha1": "fb469b64e3ffb8e84763330fe20b3fd8521928dc",
+      "sourceSize": 33749508,
+      "sourceSha1": "fb469b64e3ffb8e84763330fe20b3fd8521928dc"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_environment_barrel_gives_ammo.bk2",
+      "targetSize": 3522340,
+      "targetSha1": "b572e702cbef482a3e8e6e0a7ee1b3b9c9fc7ea7",
+      "sourceSize": 3522340,
+      "sourceSha1": "b572e702cbef482a3e8e6e0a7ee1b3b9c9fc7ea7"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_environment_barrel_respawn.bk2",
+      "targetSize": 1250904,
+      "targetSha1": "e4f03e0e462241f8b9cfeed575ba1a1a23046435",
+      "sourceSize": 1250904,
+      "sourceSha1": "e4f03e0e462241f8b9cfeed575ba1a1a23046435"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_environment_thicker_skin_upgrade.bk2",
+      "targetSize": 2548524,
+      "targetSha1": "02e70b944c629b281f1af8e464b2e98c8d831d8c",
+      "sourceSize": 2548524,
+      "sourceSha1": "02e70b944c629b281f1af8e464b2e98c8d831d8c"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_exploration_items_automap.bk2",
+      "targetSize": 159716,
+      "targetSha1": "0a84a5bc2cdb55fdcb1621fe2a49392746c314a9",
+      "sourceSize": 159716,
+      "sourceSha1": "0a84a5bc2cdb55fdcb1621fe2a49392746c314a9"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_exploration_items_dossier.bk2",
+      "targetSize": 299924,
+      "targetSha1": "f771fc8fd0281f72558466f6234615518f3e4c5e",
+      "sourceSize": 299924,
+      "sourceSha1": "f771fc8fd0281f72558466f6234615518f3e4c5e"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_exploration_radius.bk2",
+      "targetSize": 113792,
+      "targetSha1": "67fc527991ea9b0b2b28cc63daed0d8b240e05eb",
+      "sourceSize": 113792,
+      "sourceSha1": "67fc527991ea9b0b2b28cc63daed0d8b240e05eb"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_frag_concussive.bk2",
+      "targetSize": 1889348,
+      "targetSha1": "6ceb594b3a05d4be7c97122293af16622722552f",
+      "sourceSize": 1889348,
+      "sourceSha1": "6ceb594b3a05d4be7c97122293af16622722552f"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_frag_double.bk2",
+      "targetSize": 3701260,
+      "targetSha1": "46c437976b58af326acc087687c073a53b9292a4",
+      "sourceSize": 3701260,
+      "sourceSha1": "46c437976b58af326acc087687c073a53b9292a4"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_frag_scatter.bk2",
+      "targetSize": 2636720,
+      "targetSha1": "d714741be94727253093cd6ee3da2015f2df631a",
+      "sourceSize": 2636720,
+      "sourceSha1": "d714741be94727253093cd6ee3da2015f2df631a"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_fundamentals_gk_recharge_dash_upgrade.bk2",
+      "targetSize": 4848912,
+      "targetSha1": "b317a0fb2743cebd58436d19491b407b1f7e757b",
+      "sourceSize": 4848912,
+      "sourceSha1": "b317a0fb2743cebd58436d19491b407b1f7e757b"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_ice_health_drops.bk2",
+      "targetSize": 7005668,
+      "targetSha1": "3fe4656288c436d4e7f5acdace4c3b811babf39a",
+      "sourceSize": 7005668,
+      "sourceSha1": "3fe4656288c436d4e7f5acdace4c3b811babf39a"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_ice_longer.bk2",
+      "targetSize": 5006948,
+      "targetSha1": "ff45ffb462e831578e93c2d5744d7b1c4a655d71",
+      "sourceSize": 5006948,
+      "sourceSha1": "ff45ffb462e831578e93c2d5744d7b1c4a655d71"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/praetor_perks/perk_ice_shatter.bk2",
+      "targetSize": 3164368,
+      "targetSha1": "d7cb160076cf0da0650c3d1ab05ebf91f531b046",
+      "sourceSize": 3164368,
+      "sourceSha1": "d7cb160076cf0da0650c3d1ab05ebf91f531b046"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/runes/rune_air_mobility.bk2",
+      "targetSize": 4671716,
+      "targetSha1": "a518cc88793a3421cced88d8e9d535450dbdd3c0",
+      "sourceSize": 4671716,
+      "sourceSha1": "a518cc88793a3421cced88d8e9d535450dbdd3c0"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/runes/rune_blood_fueled.bk2",
+      "targetSize": 6575200,
+      "targetSha1": "60287bbc9679d21eff7f4f682b59174f5fa75311",
+      "sourceSize": 6575200,
+      "sourceSha1": "60287bbc9679d21eff7f4f682b59174f5fa75311"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/runes/rune_blood_punch_loot.bk2",
+      "targetSize": 2676516,
+      "targetSha1": "648aa40f85a9937d085ef2f7869c4f2be97f9393",
+      "sourceSize": 2676516,
+      "sourceSha1": "648aa40f85a9937d085ef2f7869c4f2be97f9393"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/runes/rune_dazed_and_confused.bk2",
+      "targetSize": 7100496,
+      "targetSha1": "2d5ca36d47710c0e10c79119ae5218dda26714ec",
+      "sourceSize": 7100496,
+      "sourceSha1": "2d5ca36d47710c0e10c79119ae5218dda26714ec"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/runes/rune_equipment_fiend.bk2",
+      "targetSize": 10815496,
+      "targetSha1": "7f85c23a0e9f8b4aa5fff8bce487de170b66538c",
+      "sourceSize": 10815496,
+      "sourceSha1": "7f85c23a0e9f8b4aa5fff8bce487de170b66538c"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/runes/rune_savagery.bk2",
+      "targetSize": 2214712,
+      "targetSha1": "c40ec318a6eb7f6d735b046a71f5a1043ac2bc05",
+      "sourceSize": 2214712,
+      "sourceSha1": "c40ec318a6eb7f6d735b046a71f5a1043ac2bc05"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/runes/rune_saving_throw.bk2",
+      "targetSize": 10019872,
+      "targetSha1": "ddc4750d070bc2cd1581e4547bb0f02950297211",
+      "sourceSize": 10019872,
+      "sourceSha1": "ddc4750d070bc2cd1581e4547bb0f02950297211"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/runes/rune_seek_and_destroy.bk2",
+      "targetSize": 3411088,
+      "targetSha1": "6f4b553ac4aee70223186a21abf47662c846c04e",
+      "sourceSize": 3411088,
+      "sourceSha1": "6f4b553ac4aee70223186a21abf47662c846c04e"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/runes/rune_target_strike.bk2",
+      "targetSize": 5350308,
+      "targetSha1": "0276cebbdb067bf3362b8da645569a22ed12fdee",
+      "sourceSize": 5350308,
+      "sourceSha1": "0276cebbdb067bf3362b8da645569a22ed12fdee"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/loading_blood_punch_pinky_doom_hunter_cyber_mancubus.bk2",
+      "targetSize": 5865836,
+      "targetSha1": "22814398b4e283d40bb18e9199905fbef2832b4c",
+      "sourceSize": 5865836,
+      "sourceSha1": "22814398b4e283d40bb18e9199905fbef2832b4c"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/loading_pinky_blood_punch.bk2",
+      "targetSize": 1628752,
+      "targetSha1": "78abba139d6308bc8531d427f3a628d9882e91be",
+      "sourceSize": 1628752,
+      "sourceSha1": "78abba139d6308bc8531d427f3a628d9882e91be"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_archvile.bk2",
+      "targetSize": 5581144,
+      "targetSha1": "0c20a2f3a3277f039afb083a6d459295d6d098fc",
+      "sourceSize": 5581144,
+      "sourceSha1": "0c20a2f3a3277f039afb083a6d459295d6d098fc"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_archvile_attack.bk2",
+      "targetSize": 4945008,
+      "targetSha1": "129470b86be6b8568af2f288a40d4f666623790f",
+      "sourceSize": 4945008,
+      "sourceSha1": "129470b86be6b8568af2f288a40d4f666623790f"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_archvile_movement.bk2",
+      "targetSize": 8018120,
+      "targetSha1": "044ca684255238b70657a28975feb56311b42476",
+      "sourceSize": 8018120,
+      "sourceSha1": "044ca684255238b70657a28975feb56311b42476"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_archvile_shield.bk2",
+      "targetSize": 5069520,
+      "targetSha1": "47e7345169bc226b2c5becef7042317f0a474546",
+      "sourceSize": 5069520,
+      "sourceSha1": "47e7345169bc226b2c5becef7042317f0a474546"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_bfg.bk2",
+      "targetSize": 7744384,
+      "targetSha1": "0dc16a249efcaaa8dbd8ca0dec33c9fbe3d06401",
+      "sourceSize": 7744384,
+      "sourceSha1": "0dc16a249efcaaa8dbd8ca0dec33c9fbe3d06401"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_blood_punch.bk2",
+      "targetSize": 8203108,
+      "targetSha1": "8846b2ed2b08a1df9bd14926edaacf02a5d2d9c8",
+      "sourceSize": 8203108,
+      "sourceSha1": "8846b2ed2b08a1df9bd14926edaacf02a5d2d9c8"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_blood_punch_ai_charge_rate.bk2",
+      "targetSize": 5836612,
+      "targetSha1": "876b7635b3ad3b9b341b304dd9d9901c9b4e6720",
+      "sourceSize": 5836612,
+      "sourceSha1": "876b7635b3ad3b9b341b304dd9d9901c9b4e6720"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_blood_punch_aoe.bk2",
+      "targetSize": 2547352,
+      "targetSha1": "c884ddf2c2ce3273b40daa916cabc2a9ea05b1f4",
+      "sourceSize": 2547352,
+      "sourceSha1": "c884ddf2c2ce3273b40daa916cabc2a9ea05b1f4"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_blood_punch_charges.bk2",
+      "targetSize": 3905656,
+      "targetSha1": "3afabc2a219f7c7833f9e604b40176d47e598eac",
+      "sourceSize": 3905656,
+      "sourceSha1": "3afabc2a219f7c7833f9e604b40176d47e598eac"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_boss_icon_of_sin_a.bk2",
+      "targetSize": 9063480,
+      "targetSha1": "ef16ace04c20244e01a183c3204e83d2cf879eca",
+      "sourceSize": 9063480,
+      "sourceSha1": "ef16ace04c20244e01a183c3204e83d2cf879eca"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_boss_icon_of_sin_b.bk2",
+      "targetSize": 6638212,
+      "targetSha1": "8b20a59786c15b512296e57dc30853e3179de312",
+      "sourceSize": 6638212,
+      "sourceSha1": "8b20a59786c15b512296e57dc30853e3179de312"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_boss_khan_maykr.bk2",
+      "targetSize": 4667928,
+      "targetSha1": "bf6a7a5e8ba705c58f12b1f354d5a588308bd253",
+      "sourceSize": 4667928,
+      "sourceSha1": "bf6a7a5e8ba705c58f12b1f354d5a588308bd253"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_chainsaw.bk2",
+      "targetSize": 4577040,
+      "targetSha1": "3f781f28a3486855a771509de7e8d91816ac069b",
+      "sourceSize": 4577040,
+      "sourceSha1": "3f781f28a3486855a771509de7e8d91816ac069b"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_crucible.bk2",
+      "targetSize": 16375768,
+      "targetSha1": "19c365097a8b04fbb3e97a73cfcc210b96ad3cd9",
+      "sourceSize": 16375768,
+      "sourceSha1": "19c365097a8b04fbb3e97a73cfcc210b96ad3cd9"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_cueball.bk2",
+      "targetSize": 2828584,
+      "targetSha1": "740e303449e199f19cab359e89279579f02be7f7",
+      "sourceSize": 2828584,
+      "sourceSha1": "740e303449e199f19cab359e89279579f02be7f7"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_dash.bk2",
+      "targetSize": 7508380,
+      "targetSha1": "d4df1e20101089e5f299f132ecea7bf9da3bde0c",
+      "sourceSize": 7508380,
+      "sourceSha1": "d4df1e20101089e5f299f132ecea7bf9da3bde0c"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_dash_refill.bk2",
+      "targetSize": 3275704,
+      "targetSha1": "15174bec4c21f6e9534d4430a33582b8a18c3b43",
+      "sourceSize": 3275704,
+      "sourceSha1": "15174bec4c21f6e9534d4430a33582b8a18c3b43"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_dash_underwater.bk2",
+      "targetSize": 2697152,
+      "targetSha1": "573cf51ecd79c489f455c8f900ce6543751a6d09",
+      "sourceSize": 2697152,
+      "sourceSha1": "573cf51ecd79c489f455c8f900ce6543751a6d09"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_demons_end.bk2",
+      "targetSize": 882116,
+      "targetSha1": "846f5e4e9c4df011dbbb31e9d21d002bf52d3568",
+      "sourceSize": 882116,
+      "sourceSha1": "846f5e4e9c4df011dbbb31e9d21d002bf52d3568"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_demon_prison.bk2",
+      "targetSize": 17543080,
+      "targetSha1": "5405220dd816c6592a2d446aeae210dd741955d3",
+      "sourceSize": 17543080,
+      "sourceSha1": "5405220dd816c6592a2d446aeae210dd741955d3"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_equipment_flame.bk2",
+      "targetSize": 6480876,
+      "targetSha1": "0e373f0a7d79ba60301746ed35b6d26f4aea62c5",
+      "sourceSize": 6480876,
+      "sourceSha1": "0e373f0a7d79ba60301746ed35b6d26f4aea62c5"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_equipment_frag.bk2",
+      "targetSize": 3779964,
+      "targetSha1": "3362d6b0dc482e5b118c063ea9433a988fe8df27",
+      "sourceSize": 3779964,
+      "sourceSha1": "3362d6b0dc482e5b118c063ea9433a988fe8df27"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_equipment_ice.bk2",
+      "targetSize": 5595432,
+      "targetSha1": "f6064b1ae24b6fa809d812c4b301e2fc67ae3115",
+      "sourceSize": 5595432,
+      "sourceSha1": "f6064b1ae24b6fa809d812c4b301e2fc67ae3115"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_glory_kill.bk2",
+      "targetSize": 5039560,
+      "targetSha1": "7ad57879ea2d23a5833f16e50e443be128cdc6ed",
+      "sourceSize": 5039560,
+      "sourceSha1": "7ad57879ea2d23a5833f16e50e443be128cdc6ed"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_mancubus_attack.bk2",
+      "targetSize": 5984644,
+      "targetSha1": "4a64662e79b0abed2bc655cd738993124026e322",
+      "sourceSize": 5984644,
+      "sourceSha1": "4a64662e79b0abed2bc655cd738993124026e322"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_mancubus_movement.bk2",
+      "targetSize": 2406336,
+      "targetSha1": "b59d28dc07ee121591ccea78502d441965f6b1e2",
+      "sourceSize": 2406336,
+      "sourceSha1": "b59d28dc07ee121591ccea78502d441965f6b1e2"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_marauder_attack.bk2",
+      "targetSize": 7035524,
+      "targetSha1": "c4e8ff80dcfc5379ef0cae4a1f097b308804531f",
+      "sourceSize": 7035524,
+      "sourceSha1": "c4e8ff80dcfc5379ef0cae4a1f097b308804531f"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_marauder_movement.bk2",
+      "targetSize": 5192192,
+      "targetSha1": "36e13bc99392894da1bed748c8771d2a71af82c3",
+      "sourceSize": 5192192,
+      "sourceSha1": "36e13bc99392894da1bed748c8771d2a71af82c3"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_mod_swap.bk2",
+      "targetSize": 1874288,
+      "targetSha1": "4f1ba848e7e2bd129ba4987004d3986f19a7c948",
+      "sourceSize": 1874288,
+      "sourceSha1": "4f1ba848e7e2bd129ba4987004d3986f19a7c948"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_painelemental_attack.bk2",
+      "targetSize": 5070372,
+      "targetSha1": "383544e02af8abdbf89de22506465e36520657d6",
+      "sourceSize": 5070372,
+      "sourceSha1": "383544e02af8abdbf89de22506465e36520657d6"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_painelemental_movement.bk2",
+      "targetSize": 6176260,
+      "targetSha1": "f44867b4051e00026f336ee093cd43390a42e03b",
+      "sourceSize": 6176260,
+      "sourceSha1": "f44867b4051e00026f336ee093cd43390a42e03b"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_painelemental_shield.bk2",
+      "targetSize": 4638428,
+      "targetSha1": "51d25d99f7ef1bdd0acb049aef41dd37f6ed21e4",
+      "sourceSize": 4638428,
+      "sourceSha1": "51d25d99f7ef1bdd0acb049aef41dd37f6ed21e4"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_plasma_vs_shields.bk2",
+      "targetSize": 2838792,
+      "targetSha1": "04c70f3fc98cf628b12ebc7b6e01494f4e7fa250",
+      "sourceSize": 2838792,
+      "sourceSha1": "04c70f3fc98cf628b12ebc7b6e01494f4e7fa250"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_play_as_revenant.bk2",
+      "targetSize": 7557796,
+      "targetSha1": "160e056539396597ea687cdb7bee82f60eca2ef9",
+      "sourceSize": 7557796,
+      "sourceSha1": "160e056539396597ea687cdb7bee82f60eca2ef9"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_block_drops.bk2",
+      "targetSize": 4005440,
+      "targetSha1": "1e7fbd2130a7c98a9e2ba5195938366434abcfca",
+      "sourceSize": 4005440,
+      "sourceSha1": "1e7fbd2130a7c98a9e2ba5195938366434abcfca"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_block_drops_player_demons.bk2",
+      "targetSize": 2600528,
+      "targetSha1": "cc4a76cb45d54b2cfff6e5026f1c840d17c95e2e",
+      "sourceSize": 2600528,
+      "sourceSha1": "cc4a76cb45d54b2cfff6e5026f1c840d17c95e2e"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_demon_card_deck2.bk2",
+      "targetSize": 673624,
+      "targetSha1": "add149affc87d0f8f8477700d21dcd60833ff432",
+      "sourceSize": 673624,
+      "sourceSha1": "add149affc87d0f8f8477700d21dcd60833ff432"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_healing_zone.bk2",
+      "targetSize": 2859856,
+      "targetSha1": "c0b98b6056f7b80747a4cd9d93f287c6e9e0cf2d",
+      "sourceSize": 2859856,
+      "sourceSha1": "c0b98b6056f7b80747a4cd9d93f287c6e9e0cf2d"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_jockeying.bk2",
+      "targetSize": 4194388,
+      "targetSha1": "9e61a8929b5b47f1287262f843be7c433862d85b",
+      "sourceSize": 4194388,
+      "sourceSha1": "9e61a8929b5b47f1287262f843be7c433862d85b"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_re-summon_demons.bk2",
+      "targetSize": 580480,
+      "targetSha1": "4387a8e1dc2db48d39e3a0504e7869d218991b06",
+      "sourceSize": 580480,
+      "sourceSha1": "4387a8e1dc2db48d39e3a0504e7869d218991b06"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_respawn.bk2",
+      "targetSize": 8360900,
+      "targetSha1": "bc2bb4fd843ce8851192497afa77fbb09de697ed",
+      "sourceSize": 8360900,
+      "sourceSha1": "bc2bb4fd843ce8851192497afa77fbb09de697ed"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_summoning_icons.bk2",
+      "targetSize": 3274812,
+      "targetSha1": "5f262dc263139aa02a3f80edcdf1689be4806c2b",
+      "sourceSize": 3274812,
+      "sourceSha1": "5f262dc263139aa02a3f80edcdf1689be4806c2b"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_summon_demons.bk2",
+      "targetSize": 1386436,
+      "targetSha1": "cc63015e497968fe805c0423f3fe86588a012297",
+      "sourceSize": 1386436,
+      "sourceSha1": "cc63015e497968fe805c0423f3fe86588a012297"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_pvp_traversals.bk2",
+      "targetSize": 7214920,
+      "targetSha1": "27880d7e5d12be5720d10d2a28665e9fdd1dc1be",
+      "sourceSize": 7214920,
+      "sourceSha1": "27880d7e5d12be5720d10d2a28665e9fdd1dc1be"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_rad_suit.bk2",
+      "targetSize": 10972700,
+      "targetSha1": "230524b9719c562a383a18e3d874ffb44368245c",
+      "sourceSize": 10972700,
+      "sourceSha1": "230524b9719c562a383a18e3d874ffb44368245c"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_revenant_attack.bk2",
+      "targetSize": 5070240,
+      "targetSha1": "7019706a237c5b901141f6745e7975248545e0ef",
+      "sourceSize": 5070240,
+      "sourceSha1": "7019706a237c5b901141f6745e7975248545e0ef"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_revenant_movement.bk2",
+      "targetSize": 6226400,
+      "targetSha1": "f1176c75fa9b7f1e3a73a7d0ddc0bfa6a1e28cb0",
+      "sourceSize": 6226400,
+      "sourceSha1": "f1176c75fa9b7f1e3a73a7d0ddc0bfa6a1e28cb0"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_sentinel_battery.bk2",
+      "targetSize": 8050592,
+      "targetSha1": "aee8577bf63573fbd2576ce311647eed5dcff885",
+      "sourceSize": 8050592,
+      "sourceSha1": "aee8577bf63573fbd2576ce311647eed5dcff885"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_super_shotgun.bk2",
+      "targetSize": 6943052,
+      "targetSha1": "30972c92bb3aa1950f7686b6ea523049df595e86",
+      "sourceSize": 6943052,
+      "sourceSha1": "30972c92bb3aa1950f7686b6ea523049df595e86"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_unmaykr.bk2",
+      "targetSize": 10724256,
+      "targetSha1": "b9ff0e6fe642991f789aa5dc5bb7e368bac16b23",
+      "sourceSize": 10724256,
+      "sourceSha1": "b9ff0e6fe642991f789aa5dc5bb7e368bac16b23"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_wall_climb.bk2",
+      "targetSize": 20041856,
+      "targetSha1": "1314cdc2112324ab2b904ebb89f6b7810a08ae39",
+      "sourceSize": 20041856,
+      "sourceSha1": "1314cdc2112324ab2b904ebb89f6b7810a08ae39"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weak_point_arachnotron.bk2",
+      "targetSize": 8795756,
+      "targetSha1": "470603fccdab4ad8b2447224dc61ecd8528053d0",
+      "sourceSize": 8795756,
+      "sourceSha1": "470603fccdab4ad8b2447224dc61ecd8528053d0"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weak_point_cacodemon.bk2",
+      "targetSize": 2702172,
+      "targetSha1": "eaac2e8bb4e41d7b0be538d3b67c0c25a8c89b4c",
+      "sourceSize": 2702172,
+      "sourceSha1": "eaac2e8bb4e41d7b0be538d3b67c0c25a8c89b4c"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weak_point_cyber_mancubus.bk2",
+      "targetSize": 5839836,
+      "targetSha1": "ff96a293ae9ec102d139fdc9cb96ce8424792e54",
+      "sourceSize": 5839836,
+      "sourceSha1": "ff96a293ae9ec102d139fdc9cb96ce8424792e54"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weak_point_doomhunter.bk2",
+      "targetSize": 18846844,
+      "targetSha1": "ec095ce61cdc73fcc7cedb3cb80a32b5ca210c9e",
+      "sourceSize": 18846844,
+      "sourceSha1": "ec095ce61cdc73fcc7cedb3cb80a32b5ca210c9e"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weak_point_maykr_zombie.bk2",
+      "targetSize": 2703236,
+      "targetSha1": "e80058e25e350e5a962e2ce2af4577ea394bb553",
+      "sourceSize": 2703236,
+      "sourceSha1": "e80058e25e350e5a962e2ce2af4577ea394bb553"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weak_point_pinky.bk2",
+      "targetSize": 4681996,
+      "targetSha1": "b3cc6cf1dc1968bed987167038b5ef86469d9b0b",
+      "sourceSize": 4681996,
+      "sourceSha1": "b3cc6cf1dc1968bed987167038b5ef86469d9b0b"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/tutorials/tutorial_weapon_wheel.bk2",
+      "targetSize": 1999484,
+      "targetSha1": "bb88f56121aed2d26ce6aeb7aa5c66fab006faaa",
+      "sourceSize": 1999484,
+      "sourceSha1": "bb88f56121aed2d26ce6aeb7aa5c66fab006faaa"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/UAC_LoadingScreen.bik",
+      "targetSize": 38496208,
+      "targetSha1": "3b8029aa341e15c8b716db280b7ecfbcf48d6bca",
+      "sourceSize": 38496208,
+      "sourceSha1": "3b8029aa341e15c8b716db280b7ecfbcf48d6bca"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/ui/versus/vs_first.bk2",
+      "targetSize": 4836772,
+      "targetSha1": "6efc473714a5a3e466cfead9ea17cd7d8742e231",
+      "sourceSize": 4836772,
+      "sourceSha1": "6efc473714a5a3e466cfead9ea17cd7d8742e231"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/ui/versus/vs_second.bk2",
+      "targetSize": 1860444,
+      "targetSha1": "7fdac0b2834b383f1786873bc1e2b7fc8ab49be8",
+      "sourceSize": 1860444,
+      "sourceSha1": "7fdac0b2834b383f1786873bc1e2b7fc8ab49be8"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/ballista_arbalest.bk2",
+      "targetSize": 3871960,
+      "targetSha1": "a909b05800dacdc2a120b09f780f8ca154807caa",
+      "sourceSize": 3871960,
+      "sourceSha1": "a909b05800dacdc2a120b09f780f8ca154807caa"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/ballista_arbalest_mastery.bk2",
+      "targetSize": 6266936,
+      "targetSha1": "d5bce7deaedb54a9550541c7d3d1fc66aee0dc5b",
+      "sourceSize": 6266936,
+      "sourceSha1": "d5bce7deaedb54a9550541c7d3d1fc66aee0dc5b"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/ballista_destroyer.bk2",
+      "targetSize": 5224184,
+      "targetSha1": "6cc518d64df9fb1195c67d073aa0a76e9619e7b8",
+      "sourceSize": 5224184,
+      "sourceSha1": "6cc518d64df9fb1195c67d073aa0a76e9619e7b8"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/ballista_destroyer_mastery.bk2",
+      "targetSize": 6357520,
+      "targetSha1": "510976ea93241b8133461aca1214be819d06830d",
+      "sourceSize": 6357520,
+      "sourceSha1": "510976ea93241b8133461aca1214be819d06830d"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/chaingun_shield.bk2",
+      "targetSize": 6359964,
+      "targetSha1": "18a074b8f8d6d363d040ae9a5445f837652785c4",
+      "sourceSize": 6359964,
+      "sourceSha1": "18a074b8f8d6d363d040ae9a5445f837652785c4"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/chaingun_shield_mastery.bk2",
+      "targetSize": 5346416,
+      "targetSha1": "cc9fdfecf3a26d5790fd8752caf97e4358cf92c1",
+      "sourceSize": 5346416,
+      "sourceSha1": "cc9fdfecf3a26d5790fd8752caf97e4358cf92c1"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/chaingun_turret.bk2",
+      "targetSize": 6358872,
+      "targetSha1": "5ea10872cb747e77d2370d5922a0caeb24d70a41",
+      "sourceSize": 6358872,
+      "sourceSha1": "5ea10872cb747e77d2370d5922a0caeb24d70a41"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/chaingun_turret_mastery.bk2",
+      "targetSize": 9431988,
+      "targetSha1": "05a89a8d72f642eeee440216fb8b22d0c7a0028a",
+      "sourceSize": 9431988,
+      "sourceSha1": "05a89a8d72f642eeee440216fb8b22d0c7a0028a"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/heavy_cannon_micro_missiles.bk2",
+      "targetSize": 4219476,
+      "targetSha1": "d3b5fa2faca0776e7e5aa43ac7cda443871b34c3",
+      "sourceSize": 4219476,
+      "sourceSha1": "d3b5fa2faca0776e7e5aa43ac7cda443871b34c3"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/heavy_Cannon_micro_missiles_mastery.bk2",
+      "targetSize": 6759252,
+      "targetSha1": "58a55d8d4303f21dfde3730a2a1055ae6142bbfc",
+      "sourceSize": 6759252,
+      "sourceSha1": "58a55d8d4303f21dfde3730a2a1055ae6142bbfc"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/heavy_cannon_precision_bolt.bk2",
+      "targetSize": 6942944,
+      "targetSha1": "ec4c84b14225680def6d77934032a093fe0617b9",
+      "sourceSize": 6942944,
+      "sourceSha1": "ec4c84b14225680def6d77934032a093fe0617b9"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/heavy_cannon_precision_bolt_mastery.bk2",
+      "targetSize": 3379484,
+      "targetSha1": "837d494fca5f30ed70808686d795e3e2decefa7b",
+      "sourceSize": 3379484,
+      "sourceSha1": "837d494fca5f30ed70808686d795e3e2decefa7b"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/plasma_heat_blast.bk2",
+      "targetSize": 4917448,
+      "targetSha1": "cf99532eb0d88f3af8c37320f8812562b8a81436",
+      "sourceSize": 4917448,
+      "sourceSha1": "cf99532eb0d88f3af8c37320f8812562b8a81436"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/plasma_heat_blast_mastery.bk2",
+      "targetSize": 5345332,
+      "targetSha1": "c62506e04e3846b47c33f4576daf898a87dc793c",
+      "sourceSize": 5345332,
+      "sourceSha1": "c62506e04e3846b47c33f4576daf898a87dc793c"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/plasma_microwave.bk2",
+      "targetSize": 5990148,
+      "targetSha1": "507cb9235a3e3f76af46431b10c7e5d86b18373d",
+      "sourceSize": 5990148,
+      "sourceSha1": "507cb9235a3e3f76af46431b10c7e5d86b18373d"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/plasma_microwave_mastery.bk2",
+      "targetSize": 4303860,
+      "targetSha1": "af5916960ccda81028e8a66a265c222b163abbdf",
+      "sourceSize": 4303860,
+      "sourceSha1": "af5916960ccda81028e8a66a265c222b163abbdf"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/rocket_lockon.bk2",
+      "targetSize": 5158148,
+      "targetSha1": "01557e75095e77defb0683f8b9f40cad656817a4",
+      "sourceSize": 5158148,
+      "sourceSha1": "01557e75095e77defb0683f8b9f40cad656817a4"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/rocket_lockon_mastery.bk2",
+      "targetSize": 5837712,
+      "targetSha1": "d8000b62a0a8c479124c23fa30a3d4ccbd0e05f4",
+      "sourceSize": 5837712,
+      "sourceSha1": "d8000b62a0a8c479124c23fa30a3d4ccbd0e05f4"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/rocket_remote_detonate.bk2",
+      "targetSize": 2735976,
+      "targetSha1": "203d08d6307e2d9852566524921e969023f517ce",
+      "sourceSize": 2735976,
+      "sourceSha1": "203d08d6307e2d9852566524921e969023f517ce"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/rocket_remote_detonate_mastery.bk2",
+      "targetSize": 2887344,
+      "targetSha1": "90d5153600b9db968fe7e19eebcffadc4990d85b",
+      "sourceSize": 2887344,
+      "sourceSha1": "90d5153600b9db968fe7e19eebcffadc4990d85b"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/shotgun_full_auto.bk2",
+      "targetSize": 5100544,
+      "targetSha1": "8de0fa43b732078966dd85f7090815b674c18f26",
+      "sourceSize": 5100544,
+      "sourceSha1": "8de0fa43b732078966dd85f7090815b674c18f26"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/shotgun_full_auto_mastery.bk2",
+      "targetSize": 4790012,
+      "targetSha1": "f1f5ae9619322a261c222d367e36c7db4125f051",
+      "sourceSize": 4790012,
+      "sourceSha1": "f1f5ae9619322a261c222d367e36c7db4125f051"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/shotgun_sticky_bomb.bk2",
+      "targetSize": 5897040,
+      "targetSha1": "6764fabb1622f085c1dd7a7435fd0fa3a9f7c960",
+      "sourceSize": 5897040,
+      "sourceSha1": "6764fabb1622f085c1dd7a7435fd0fa3a9f7c960"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/shotgun_sticky_bomb_mastery.bk2",
+      "targetSize": 5345336,
+      "targetSha1": "419e5a9c85070b6c7a468b4a5574f89b22ecba00",
+      "sourceSize": 5345336,
+      "sourceSha1": "419e5a9c85070b6c7a468b4a5574f89b22ecba00"
+    },
+    {
+      "depot": 782335,
+      "path": "base/video/weaponmods/super_shotgun_mastery.bk2",
+      "targetSize": 2580120,
+      "targetSha1": "9e25678a5d2a25d63cfbbd5677a89089d03a2779",
+      "sourceSize": 2580120,
+      "sourceSha1": "9e25678a5d2a25d63cfbbd5677a89089d03a2779"
+    },
+    {
+      "depot": 782336,
+      "path": "base/build-manifest.bin",
+      "targetSize": 20035518,
+      "targetSha1": "b745adc0124d76f24fb1377d69c88dea6fb4fd01",
+      "sourceSize": 53055779,
+      "sourceSha1": "a2ef169cf2786742a912323ec5206861a9410931"
+    },
+    {
+      "depot": 782336,
+      "path": "base/candidate.cfg",
+      "targetSize": 1000,
+      "targetSha1": "6c67ff3eb6adb700625657b73ffafe40d476032b",
+      "sourceSize": 344,
+      "sourceSha1": "db7015cdbb66becce36cd55d8d11b77221151baa"
+    },
+    {
+      "depot": 782336,
+      "path": "base/disclayout.cfg",
+      "targetSize": 56,
+      "targetSha1": "2f518959388244c45f2fd46734c8e79248cb1f57",
+      "sourceSize": 57,
+      "sourceSha1": "487ff15085605bbbf8b7336e2b2c684f066edb54"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_0_2.streamdb",
+      "targetSize": 27764746,
+      "targetSha1": "13a0f32334746bb6144ea2c8ddf6f0a5361d21e9",
+      "sourceSize": 297669095,
+      "sourceSha1": "6c1b624e72dc0efaf3e5b73cb98deda7d94392c7"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_1_3.streamdb",
+      "targetSize": 100235,
+      "targetSha1": "6f5870af1f3c836103abd319701b488300579887",
+      "sourceSize": 1797816736,
+      "sourceSha1": "7b5a473516adb56ccb4b06d6ae774e91408b9f11"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_2_2.streamdb",
+      "targetSize": 6556228,
+      "targetSha1": "226c33279a444e731b751144f320c45a445f8cff",
+      "sourceSize": 269811259,
+      "sourceSha1": "73b4ca3174abefd8977bad0eeb923a8574ae208b"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_3_2.streamdb",
+      "targetSize": 11796237,
+      "targetSha1": "630d30539de1cc2643ff855b0e0411e73c1c6cc8",
+      "sourceSize": 191686823,
+      "sourceSha1": "45a8e7835222aa92edfce7508c5b19ec0e2d19df"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_4_2.streamdb",
+      "targetSize": 600266,
+      "targetSha1": "7a11c19ccec37b4c7168f2a47c6f642ab8a5e1f2",
+      "sourceSize": 120975844,
+      "sourceSha1": "11374458be9d3b46fd44d9876694d419610cc881"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_patch1.resources",
+      "targetSize": 104368075,
+      "targetSha1": "43c5b244b4044757dde7f0b6c322333019d8772d",
+      "sourceSize": 219704708,
+      "sourceSha1": "40a1d34ccfdf392e82ee7f32a04d81e433788bac"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/hub/hub.resources",
+      "targetSize": 143163830,
+      "targetSha1": "ad438ecf648c2faf6ce7875cda4b374380b2100d",
+      "sourceSize": 81867390,
+      "sourceSha1": "fe41fab52967d2451cf235f45420fe73f4a30edc"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/hub/hub_patch1.resources",
+      "targetSize": 7144454,
+      "targetSha1": "87c866997ad7d9834e34b04604a188125442e774",
+      "sourceSize": 140682246,
+      "sourceSha1": "4a2cf6240d828153688dfed23935f67bd34cc44e"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/pvp/pvp_bronco/pvp_bronco.resources",
+      "targetSize": 37137143,
+      "targetSha1": "a5e7d200f38ef334af4592ceb67773c94f3109e2",
+      "sourceSize": 97601609,
+      "sourceSha1": "e2ad6fd27adcdea1d2005e201d004299b305f1fb"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/pvp/pvp_deathvalley/pvp_deathvalley.resources",
+      "targetSize": 36408079,
+      "targetSha1": "0e3f78396a2f02f694725e151bd2c540431487ac",
+      "sourceSize": 95963919,
+      "sourceSha1": "70fe46bbe7fd6f3038d7ffc1464f732cc899df44"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/pvp/pvp_inferno/pvp_inferno.resources",
+      "targetSize": 22418724,
+      "targetSha1": "eae088bac47bace8fa3beba44d99c31a6b47c26f",
+      "sourceSize": 82494756,
+      "sourceSha1": "a8ec3e1d4597fae39d69372a5ed0264dcb3d342e"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/pvp/pvp_laser/pvp_laser.resources",
+      "targetSize": 39876681,
+      "targetSha1": "38b7474f0347329d6d41cc368a2b5256dc1aae8a",
+      "sourceSize": 99842121,
+      "sourceSha1": "2d3401550c9891dbb9de92f336eb9e7269e9e6f6"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/pvp/pvp_thunder/pvp_thunder.resources",
+      "targetSize": 40195789,
+      "targetSha1": "7faf989b49a144ffd30017428d5f3533cbf49dd3",
+      "sourceSize": 100322746,
+      "sourceSha1": "51ec8f0fe70cafd22ee88791c0a1a02213896802"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/pvp/pvp_zap/pvp_zap.resources",
+      "targetSize": 45037184,
+      "targetSha1": "5d736da62b01888beb187a51a2a711f3666d4b52",
+      "sourceSize": 104938733,
+      "sourceSha1": "bbd2f52e1f5f619f44964e951d824760670b4ffd"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/shell/shell.resources",
+      "targetSize": 16299686,
+      "targetSha1": "237c1bed3e42f0dbbd817864f29331373042f26a",
+      "sourceSize": 107646189,
+      "sourceSha1": "44d6c997c818a461cb00aa7ecc642645f83f7d20"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e1m1_intro/e1m1_intro_patch1.resources",
+      "targetSize": 9662059,
+      "targetSha1": "caa1fddb01f31e788568c72a09ce6adb5e11f15f",
+      "sourceSize": 101631148,
+      "sourceSha1": "61e757f727d554c737b79b6985c26d4875eb414c"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e1m2_battle/e1m2_battle_patch1.resources",
+      "targetSize": 7627948,
+      "targetSha1": "8a9efd75bb7e9b649623d162fd446638820323c2",
+      "sourceSize": 161592670,
+      "sourceSha1": "a66b14a3b5f09cb68fe49678941bc0dbf2f15d18"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e1m3_cult/e1m3_cult_patch1.resources",
+      "targetSize": 11612161,
+      "targetSha1": "fa9d36535806060541c7082c5fcf5b20e17e1ea8",
+      "sourceSize": 161914872,
+      "sourceSha1": "e2a02cd391e0358c43d96ebd7d3f3eac1da7de6f"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e1m4_boss/e1m4_boss_patch1.resources",
+      "targetSize": 6660996,
+      "targetSha1": "43ecccab584ff68f4026a59928f0f15b91807511",
+      "sourceSize": 119980415,
+      "sourceSha1": "c9bd4829bba70d6cd613cf5289c6351ff6fcef63"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e2m1_nest/e2m1_nest_patch1.resources",
+      "targetSize": 12047169,
+      "targetSha1": "099d7cbb9993276e411b65543ea9781fcd8190e8",
+      "sourceSize": 161575084,
+      "sourceSha1": "ef6c36d402b1e92a482be1ec55de315ca160af05"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e2m2_base/e2m2_base_patch1.resources",
+      "targetSize": 16352122,
+      "targetSha1": "8b6564506cc2cfa26b7b2da69f6c2cd4dbf28d79",
+      "sourceSize": 86447816,
+      "sourceSha1": "5a842cf6c9e2b12021a10eafba7f75b00fe8bd90"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e2m3_core/e2m3_core_patch1.resources",
+      "targetSize": 14423719,
+      "targetSha1": "36ef7297da1c6415de804b79e40bc6329ba9e2ae",
+      "sourceSize": 197972300,
+      "sourceSha1": "0da86e5129284e73f7292287d282362c5c193948"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e2m4_boss/e2m4_boss.resources",
+      "targetSize": 95280838,
+      "targetSha1": "a7957507897d036d968e4a62b165fe857cd90dbf",
+      "sourceSize": 91325462,
+      "sourceSha1": "6b876d0580ea64c907963dc1071f680089ad579e"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e2m4_boss/e2m4_boss_patch1.resources",
+      "targetSize": 2408043,
+      "targetSha1": "ff0be8875e4b59a3b56a54437ac68b8267fd40c8",
+      "sourceSize": 89015462,
+      "sourceSha1": "cead438f3a93f45cbba7cfbd79321cef7194dac0"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m1_slayer/e3m1_slayer_patch1.resources",
+      "targetSize": 9855788,
+      "targetSha1": "d2fecd77a4d0a18a20cf5a6cb2e16275a1d60bc3",
+      "sourceSize": 192131637,
+      "sourceSha1": "238409924437f7d5ff3cc131abe12cbcc7976c35"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m2_hell/e3m2_hell_patch1.resources",
+      "targetSize": 7749227,
+      "targetSha1": "378e0abc92fb0e20edbbbecdbc617bdd23bc38d3",
+      "sourceSize": 103907555,
+      "sourceSha1": "2a7f2c6f44eff55a2e7aa95d9987e9984c1c3b4b"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m2_hell_b/e3m2_hell_b_patch1.resources",
+      "targetSize": 5621256,
+      "targetSha1": "07681ebf52931da8f106b76a74da16ffb4a83884",
+      "sourceSize": 108926472,
+      "sourceSha1": "800bd9bfa035c13bbec10004f4924244b40c7f5d"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m3_maykr/e3m3_maykr_patch1.resources",
+      "targetSize": 9180108,
+      "targetSha1": "41508854587360bea0be75e4f41f451ab11db074",
+      "sourceSize": 87559398,
+      "sourceSha1": "1b3b49be258e69948e0359330097efef4f16b049"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m4_boss/e3m4_boss_patch1.resources",
+      "targetSize": 7188486,
+      "targetSha1": "3ec5dd1ab6fc896e1abceca0be2a2b7b1a1d3873",
+      "sourceSize": 146153467,
+      "sourceSha1": "433a7ad0aa6ae6cc5d02737f3598b6a8cc4f657a"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/tutorials/tutorial_demons.resources",
+      "targetSize": 9430796,
+      "targetSha1": "106720e3a2299a2fc0763b6ed3ec5ed6367f2990",
+      "sourceSize": 14841612,
+      "sourceSha1": "a74a5d55034396299f9126ee814f2bb4e702e6a1"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/tutorials/tutorial_pvp_laser/tutorial_pvp_laser.resources",
+      "targetSize": 28586778,
+      "targetSha1": "6856d6dfac639ae57c397f7b76b329fa77ad858f",
+      "sourceSize": 97969713,
+      "sourceSha1": "5cc1f0c73ff4c04f65a174adf6f50d385bcc76fd"
+    },
+    {
+      "depot": 782336,
+      "path": "base/meta.resources",
+      "targetSize": 3112,
+      "targetSha1": "945d60b9ee421f00517e6031f2e2e42075108acb",
+      "sourceSize": 19341,
+      "sourceSha1": "2341bd8a9e7412885a1b7a9c8de35ec878db6d2c"
+    },
+    {
+      "depot": 782336,
+      "path": "base/package.cfg",
+      "targetSize": 534,
+      "targetSha1": "2b297716186f51dce32f1218d72b1b79f33051f2",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782336,
+      "path": "base/packagemapspec.json",
+      "targetSize": 41579,
+      "targetSha1": "bd109f8c72550001cc0fa4b0e9d57100c6b5779e",
+      "sourceSize": 104711,
+      "sourceSha1": "f88221e96f01ba9529e58c9948f14667a989c498"
+    },
+    {
+      "depot": 782336,
+      "path": "base/rcbootstrap.bin",
+      "targetSize": 249,
+      "targetSha1": "83c358016373f8b1d4c4bc16d9716d0d9d9269b5",
+      "sourceSize": 233,
+      "sourceSha1": "4ec6a4ad108dd625878f21a0fd9025f52929aced"
+    },
+    {
+      "depot": 782336,
+      "path": "base/warehouse.resources",
+      "targetSize": 45666824,
+      "targetSha1": "ab75f4fc9ce5428e298fea68439faf08b8ac7f84",
+      "sourceSize": 88054304,
+      "sourceSha1": "46a2cb8bc0458b186c940d8e1c0a6194b0acb1c3"
+    },
+    {
+      "depot": 782336,
+      "path": "base/classicwads/DOOM.WAD",
+      "targetSize": 12474561,
+      "targetSha1": "117015379c529573510be08cf59810aa10bb934e",
+      "sourceSize": 12474561,
+      "sourceSha1": "117015379c529573510be08cf59810aa10bb934e"
+    },
+    {
+      "depot": 782336,
+      "path": "base/classicwads/DOOM2.WAD",
+      "targetSize": 14603212,
+      "targetSha1": "f1b6ba94352d53f646b67c01d2da88c5c40e3179",
+      "sourceSize": 14603212,
+      "sourceSha1": "f1b6ba94352d53f646b67c01d2da88c5c40e3179"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources.resources",
+      "targetSize": 372013813,
+      "targetSha1": "002a047c9f867eb9b552fe08469d033ee365bbd9",
+      "sourceSize": 372013813,
+      "sourceSha1": "002a047c9f867eb9b552fe08469d033ee365bbd9"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_0_1.streamdb",
+      "targetSize": 12636612813,
+      "targetSha1": "cbe52e9cf125c0dc257cf92eafe60f39e4c648a8",
+      "sourceSize": 12636612813,
+      "sourceSha1": "cbe52e9cf125c0dc257cf92eafe60f39e4c648a8"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_1_1.streamdb",
+      "targetSize": 3322760047,
+      "targetSha1": "9924779884090fba2b9ad525d6b26566d599ba2f",
+      "sourceSize": 3322760047,
+      "sourceSha1": "9924779884090fba2b9ad525d6b26566d599ba2f"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_1_2.streamdb",
+      "targetSize": 2592965804,
+      "targetSha1": "adb3c2449f9e44a84b5318e1c2e05179916832c9",
+      "sourceSize": 2592965804,
+      "sourceSha1": "adb3c2449f9e44a84b5318e1c2e05179916832c9"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_2_1.streamdb",
+      "targetSize": 3848766596,
+      "targetSha1": "81ee7b7aa0a8126723908dee0434ba016c9b4353",
+      "sourceSize": 3848766596,
+      "sourceSha1": "81ee7b7aa0a8126723908dee0434ba016c9b4353"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_3_1.streamdb",
+      "targetSize": 2988973871,
+      "targetSha1": "43b14bbbd491abc75b6464e3baf186c6ca98dc2a",
+      "sourceSize": 2988973871,
+      "sourceSha1": "43b14bbbd491abc75b6464e3baf186c6ca98dc2a"
+    },
+    {
+      "depot": 782336,
+      "path": "base/gameresources_4_1.streamdb",
+      "targetSize": 1353405353,
+      "targetSha1": "5639204ccf5f2d0e5a00e34c5293f1bbe4f7d336",
+      "sourceSize": 1353405353,
+      "sourceSha1": "5639204ccf5f2d0e5a00e34c5293f1bbe4f7d336"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e1m1_intro/e1m1_intro.resources",
+      "targetSize": 236750604,
+      "targetSha1": "fe106c947f49b8b2153902e81fcaf8297583c9c5",
+      "sourceSize": 236750604,
+      "sourceSha1": "fe106c947f49b8b2153902e81fcaf8297583c9c5"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e1m2_battle/e1m2_battle.resources",
+      "targetSize": 219173749,
+      "targetSha1": "63ce6efd863999361611e49472217b5d597b5978",
+      "sourceSize": 219173749,
+      "sourceSha1": "63ce6efd863999361611e49472217b5d597b5978"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e1m3_cult/e1m3_cult.resources",
+      "targetSize": 204506577,
+      "targetSha1": "da820ac0503de1ec6a15c665d6bdd87235dfd4bf",
+      "sourceSize": 204506577,
+      "sourceSha1": "da820ac0503de1ec6a15c665d6bdd87235dfd4bf"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e1m4_boss/e1m4_boss.resources",
+      "targetSize": 139876872,
+      "targetSha1": "abcd9c1b91b0a85c9e84e919b717406be0f73a13",
+      "sourceSize": 139876872,
+      "sourceSha1": "abcd9c1b91b0a85c9e84e919b717406be0f73a13"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e2m1_nest/e2m1_nest.resources",
+      "targetSize": 230683804,
+      "targetSha1": "65053953c07933f8c7c397dba69fb3026ded87bc",
+      "sourceSize": 230683804,
+      "sourceSha1": "65053953c07933f8c7c397dba69fb3026ded87bc"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e2m2_base/e2m2_base.resources",
+      "targetSize": 250527685,
+      "targetSha1": "8fb86953d02f008de026f6ce4b911b6125fdf6fd",
+      "sourceSize": 250527685,
+      "sourceSha1": "8fb86953d02f008de026f6ce4b911b6125fdf6fd"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e2m3_core/e2m3_core.resources",
+      "targetSize": 307353465,
+      "targetSha1": "05092899fe721677cadd32d94c281fdf05d99443",
+      "sourceSize": 307353465,
+      "sourceSha1": "05092899fe721677cadd32d94c281fdf05d99443"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m1_slayer/e3m1_slayer.resources",
+      "targetSize": 233782454,
+      "targetSha1": "cbf8cc1d22e47a064c323a0f779c869afbbfd075",
+      "sourceSize": 233782454,
+      "sourceSha1": "cbf8cc1d22e47a064c323a0f779c869afbbfd075"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m2_hell/e3m2_hell.resources",
+      "targetSize": 151598520,
+      "targetSha1": "550c6c92d9cda49eecaa91de6b998587acd9afe9",
+      "sourceSize": 151598520,
+      "sourceSha1": "550c6c92d9cda49eecaa91de6b998587acd9afe9"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m2_hell_b/e3m2_hell_b.resources",
+      "targetSize": 137053834,
+      "targetSha1": "56ef8f43b49cae915e3695323c7b48c075494edd",
+      "sourceSize": 137053834,
+      "sourceSha1": "56ef8f43b49cae915e3695323c7b48c075494edd"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m3_maykr/e3m3_maykr.resources",
+      "targetSize": 226644677,
+      "targetSha1": "ae89a784b619832c3f7a24939a72d274b798d7ad",
+      "sourceSize": 226644677,
+      "sourceSha1": "ae89a784b619832c3f7a24939a72d274b798d7ad"
+    },
+    {
+      "depot": 782336,
+      "path": "base/game/sp/e3m4_boss/e3m4_boss.resources",
+      "targetSize": 234434190,
+      "targetSha1": "b70c492af18be27e73b7affd7c781b4128695b23",
+      "sourceSize": 234434190,
+      "sourceSha1": "b70c492af18be27e73b7affd7c781b4128695b23"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/pvp/pvp_inferno/pvp_inferno.lightdb",
+      "targetSize": 36475760,
+      "targetSha1": "f87811db8f4de2ccf9f3d3a6aa6e2610aff47f5d",
+      "sourceSize": 33708832,
+      "sourceSha1": "e4f4ad2503956558fadc152ca0a988ab3034b385"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/tutorials/tutorial_demons.lightdb",
+      "targetSize": 1267344,
+      "targetSha1": "9be3a362e92e303577f770eaafddfcc57b33fdbc",
+      "sourceSize": 1497856,
+      "sourceSha1": "ed97df0bf76f090bc0644b71be4f88dfccdd858d"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/hub/hub.lightdb",
+      "targetSize": 108377168,
+      "targetSha1": "27350d860d2ae83b05a77a222b815a6e1596c9a6",
+      "sourceSize": 108377168,
+      "sourceSha1": "27350d860d2ae83b05a77a222b815a6e1596c9a6"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/pvp/pvp_bronco/pvp_bronco.lightdb",
+      "targetSize": 30959632,
+      "targetSha1": "cd865f6f259abf10389554572f6bb6c52b6791ee",
+      "sourceSize": 30959632,
+      "sourceSha1": "cd865f6f259abf10389554572f6bb6c52b6791ee"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/pvp/pvp_deathvalley/pvp_deathvalley.lightdb",
+      "targetSize": 59006688,
+      "targetSha1": "977710c6b10a88afc7f940a898dc89c0ffb3bbbe",
+      "sourceSize": 59006688,
+      "sourceSha1": "977710c6b10a88afc7f940a898dc89c0ffb3bbbe"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/pvp/pvp_laser/pvp_laser.lightdb",
+      "targetSize": 51451904,
+      "targetSha1": "2cc11d0a8fef3f8b65630c5c9b2d300e3913a566",
+      "sourceSize": 51451904,
+      "sourceSha1": "2cc11d0a8fef3f8b65630c5c9b2d300e3913a566"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/pvp/pvp_thunder/pvp_thunder.lightdb",
+      "targetSize": 62896608,
+      "targetSha1": "5f215d5eea5da0795d3077d737d2cd70e5cdcbf4",
+      "sourceSize": 62896608,
+      "sourceSha1": "5f215d5eea5da0795d3077d737d2cd70e5cdcbf4"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/pvp/pvp_zap/pvp_zap.lightdb",
+      "targetSize": 31811760,
+      "targetSha1": "844a81a32c5f56e6b3d91671bfc30da3766ad4dd",
+      "sourceSize": 31811760,
+      "sourceSha1": "844a81a32c5f56e6b3d91671bfc30da3766ad4dd"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/shell/shell.lightdb",
+      "targetSize": 144,
+      "targetSha1": "b1ed9a3fad3c414a98f954c1ce399348e2946272",
+      "sourceSize": 144,
+      "sourceSha1": "b1ed9a3fad3c414a98f954c1ce399348e2946272"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e1m1_intro/e1m1_intro.lightdb",
+      "targetSize": 543874528,
+      "targetSha1": "db616eea20b349d50c66ae724b02d342d8b99760",
+      "sourceSize": 543874528,
+      "sourceSha1": "db616eea20b349d50c66ae724b02d342d8b99760"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e1m2_battle/e1m2_battle.lightdb",
+      "targetSize": 501094640,
+      "targetSha1": "0ed80fa4897ce1739c22413f9611285ac97e1754",
+      "sourceSize": 501094640,
+      "sourceSha1": "0ed80fa4897ce1739c22413f9611285ac97e1754"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e1m3_cult/e1m3_cult.lightdb",
+      "targetSize": 363450480,
+      "targetSha1": "95b0561f5c6d84863d7dcc1c55309f5a6229ed69",
+      "sourceSize": 363450480,
+      "sourceSha1": "95b0561f5c6d84863d7dcc1c55309f5a6229ed69"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e1m4_boss/e1m4_boss.lightdb",
+      "targetSize": 264145344,
+      "targetSha1": "936d095b927272a358193cad9e700df45d83f84d",
+      "sourceSize": 264145344,
+      "sourceSha1": "936d095b927272a358193cad9e700df45d83f84d"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e2m1_nest/e2m1_nest.lightdb",
+      "targetSize": 380740320,
+      "targetSha1": "a84751c8e1f1feefb968a6303f9a93892b67bc27",
+      "sourceSize": 380740320,
+      "sourceSha1": "a84751c8e1f1feefb968a6303f9a93892b67bc27"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e2m2_base/e2m2_base.lightdb",
+      "targetSize": 322404560,
+      "targetSha1": "12b9e18167900516badd22fa9e4e48953f9e945d",
+      "sourceSize": 322404560,
+      "sourceSha1": "12b9e18167900516badd22fa9e4e48953f9e945d"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e2m3_core/e2m3_core.lightdb",
+      "targetSize": 461313904,
+      "targetSha1": "1d0c390e401aa844edffafe776049c9cdc801ba7",
+      "sourceSize": 461313904,
+      "sourceSha1": "1d0c390e401aa844edffafe776049c9cdc801ba7"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e2m4_boss/e2m4_boss.lightdb",
+      "targetSize": 151006800,
+      "targetSha1": "6eb484241f63845e1524b370b40bf3c190ccad86",
+      "sourceSize": 151006800,
+      "sourceSha1": "6eb484241f63845e1524b370b40bf3c190ccad86"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e3m1_slayer/e3m1_slayer.lightdb",
+      "targetSize": 412620576,
+      "targetSha1": "c7847bc6c9088b465aeef657602a0b4229713d94",
+      "sourceSize": 412620576,
+      "sourceSha1": "c7847bc6c9088b465aeef657602a0b4229713d94"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e3m2_hell/e3m2_hell.lightdb",
+      "targetSize": 432242432,
+      "targetSha1": "8d14052e944c7f86ed560b6c9f9f08a65748987f",
+      "sourceSize": 432242432,
+      "sourceSha1": "8d14052e944c7f86ed560b6c9f9f08a65748987f"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e3m2_hell_b/e3m2_hell_b.lightdb",
+      "targetSize": 362740544,
+      "targetSha1": "d0387f5bf4fd1372786c4d81c4e240c67d02d40c",
+      "sourceSize": 362740544,
+      "sourceSha1": "d0387f5bf4fd1372786c4d81c4e240c67d02d40c"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e3m3_maykr/e3m3_maykr.lightdb",
+      "targetSize": 545777184,
+      "targetSha1": "0ef5320e714769b10f448240d2c1135baf33cc34",
+      "sourceSize": 545777184,
+      "sourceSha1": "0ef5320e714769b10f448240d2c1135baf33cc34"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/sp/e3m4_boss/e3m4_boss.lightdb",
+      "targetSize": 335949760,
+      "targetSha1": "552a0a61bed495ad81144e6ab5350286e044c849",
+      "sourceSize": 335949760,
+      "sourceSha1": "552a0a61bed495ad81144e6ab5350286e044c849"
+    },
+    {
+      "depot": 782337,
+      "path": "virtualtextures/maps/game/tutorials/tutorial_pvp_laser/tutorial_pvp_laser.lightdb",
+      "targetSize": 50809344,
+      "targetSha1": "179d3a029ec6a8049b210fe56037461d27fd131b",
+      "sourceSize": 50809344,
+      "sourceSha1": "179d3a029ec6a8049b210fe56037461d27fd131b"
+    },
+    {
+      "depot": 782338,
+      "path": "base/rcbootstrap.bin",
+      "targetSize": 249,
+      "targetSha1": "83c358016373f8b1d4c4bc16d9716d0d9d9269b5",
+      "sourceSize": 233,
+      "sourceSha1": "4ec6a4ad108dd625878f21a0fd9025f52929aced"
+    },
+    {
+      "depot": 782339,
+      "path": "idTechLauncher.exe",
+      "targetSize": 15222784,
+      "targetSha1": "bb83e9d451fa1fcbad25f7cae593ea10e7b803de",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/images/doometernal.png",
+      "targetSize": 10199297,
+      "targetSha1": "8552ad5cb2760a6ddcdd62faa3be2e770c5fd3da",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/images/logo.png",
+      "targetSize": 3899,
+      "targetSha1": "81a951cddbb586847c84594a0a318c5ba5a950f3",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/launcher.cfg",
+      "targetSize": 442,
+      "targetSha1": "fb9369cd4531d953b7b04f29c7916ebe5286e73d",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/english.blang",
+      "targetSize": 1472,
+      "targetSha1": "549b41b27d5af8c3c67d1ac4a9f2d808d8df7ede",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/french.blang",
+      "targetSize": 1839,
+      "targetSha1": "994cde100e3b367f3e8bc8be3ad5b8e5eb3a5d1a",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/german.blang",
+      "targetSize": 1646,
+      "targetSha1": "444df93824c0c7b14a6a0d9eecff9b13e3b28a49",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/italian.blang",
+      "targetSize": 1598,
+      "targetSha1": "3fcb7e5e6367d807e6e25a19b9c0b07ea0f98d64",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/japanese.blang",
+      "targetSize": 1975,
+      "targetSha1": "5df8ae37d4ce067a9ccde0f4b52b8a7b279deb3c",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/korean.blang",
+      "targetSize": 1699,
+      "targetSha1": "5d5ece6288a39afefe90679195f6a6f9e60a2baa",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/latin_spanish.blang",
+      "targetSize": 1750,
+      "targetSha1": "c73c37c554e193875ebaeb55129397c50e5fe104",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/polish.blang",
+      "targetSize": 1687,
+      "targetSha1": "c8440dbee3af33160db9ffe8595f2365adb5a193",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/portugese.blang",
+      "targetSize": 985,
+      "targetSha1": "2e4479111908f458ac3e4933ca6dffc8a741913b",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/portuguese.blang",
+      "targetSize": 1642,
+      "targetSha1": "ca1faae62edc74d257d1b29448ca3a602e523484",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/russian.blang",
+      "targetSize": 2461,
+      "targetSha1": "0efc6f9cbcade747f3045c0b1901187e58c8cc65",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/simplified_chinese.blang",
+      "targetSize": 1468,
+      "targetSha1": "37dcfe4a39c257e2f62f3a979b6bac87f52037f9",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/spanish.blang",
+      "targetSize": 1761,
+      "targetSha1": "489638134e602db53422b2d1b1c5ad060c7fcf05",
+      "sourceSize": null,
+      "sourceSha1": null
+    },
+    {
+      "depot": 782339,
+      "path": "launcherData/strings/traditional_chinese.blang",
+      "targetSize": 1444,
+      "targetSha1": "b0857856ec016a7b8f848a0a79c7d175030284b9",
+      "sourceSize": null,
+      "sourceSha1": null
+    }
+  ]
+}
