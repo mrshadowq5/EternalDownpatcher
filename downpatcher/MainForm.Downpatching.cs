@@ -1,0 +1,1238 @@
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace EternalDownpatcher.WinForms;
+
+public sealed partial class MainForm : Form
+{
+    #region Download and patch workflow
+
+    private void RestoreBackupButton_Click(object? sender, EventArgs e)
+    {
+        if (_isRunning)
+        {
+            return;
+        }
+
+        _versionDataCancellation?.Cancel();
+        string? targetFolder = _doomRootFolder;
+        if (string.IsNullOrWhiteSpace(targetFolder) || !IsValidDoomRootFolder(targetFolder))
+        {
+            using FolderBrowserDialog targetDialog = new()
+            {
+                Description = "Select DOOM Eternal root folder to restore backup into",
+                UseDescriptionForTitle = true
+            };
+            if (targetDialog.ShowDialog(this) != DialogResult.OK)
+            {
+                return;
+            }
+
+            targetFolder = Path.GetFullPath(targetDialog.SelectedPath);
+            if (!IsValidDoomRootFolder(targetFolder))
+            {
+                ShowErrorKey("SelectedTargetFolderInvalid");
+                return;
+            }
+        }
+
+        using FolderBrowserDialog backupDialog = new()
+        {
+            Description = "Select EternalDownpatcher backup folder",
+            UseDescriptionForTitle = true,
+            InitialDirectory = targetFolder
+        };
+        if (backupDialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        string backupFolder = Path.GetFullPath(backupDialog.SelectedPath);
+        if (!Directory.Exists(backupFolder) || !Directory.EnumerateFileSystemEntries(backupFolder).Any())
+        {
+            ShowErrorKey("BackupFolderInvalid");
+            return;
+        }
+
+        DialogResult result = MessageBox.Show(this, $"Restore this backup into DOOM Eternal folder?\n\nBackup:\n{backupFolder}\n\nTarget:\n{targetFolder}" + (File.Exists(Path.Combine(backupFolder, PatchBackup.ManifestName)) ? "" : "\n\n" + L("LegacyBackupWarning")), "Restore backup", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+        if (result != DialogResult.Yes)
+        {
+            WriteLog("Restore backup cancelled.");
+            return;
+        }
+
+        try
+        {
+            WriteLog($"Restoring backup: {backupFolder}");
+            WriteLog($"Restore target: {targetFolder}");
+            bool completeBackup = PatchBackup.Restore(backupFolder, targetFolder);
+            if (!completeBackup)
+                WriteLog(L("LegacyBackupWarning"));
+            _doomRootFolder = targetFolder;
+            _installedVersion = DetectInstalledVersion(targetFolder);
+            RefreshDownpatchVersions();
+            ApplyLanguage();
+            WriteLog("Backup restored successfully.");
+            MessageBox.Show(this, completeBackup ? L("BackupRestored") : L("BackupRestored") + "\n\n" + L("LegacyBackupWarning"), "EternalDownpatcher", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception exception)
+        {
+            ShowErrorKey("RestoreBackupFailed", exception.Message);
+        }
+    }
+
+    private async void StartButton_Click(object? sender, EventArgs e)
+    {
+        if (_isRunning)
+        {
+            return;
+        }
+
+        bool downloadAllFiles = _downloadAllFilesRadioButton.Checked;
+        List<string> missingFields = [];
+        if (_versionComboBox.SelectedItem is null)
+        {
+            missingFields.Add(L("MissingGameVersion"));
+        }
+
+        if (string.IsNullOrWhiteSpace(_steamUsernameTextBox.Text))
+        {
+            missingFields.Add(L("MissingSteamLogin"));
+        }
+
+        if (string.IsNullOrWhiteSpace(_steamPasswordTextBox.Text))
+        {
+            missingFields.Add(L("MissingSteamPassword"));
+        }
+
+        if (!downloadAllFiles && string.IsNullOrWhiteSpace(_doomRootFolder))
+        {
+            missingFields.Add(L("MissingDoomRoot"));
+        }
+
+        if (string.IsNullOrWhiteSpace(_downpatchFolderTextBox.Text))
+        {
+            missingFields.Add(downloadAllFiles ? L("MissingDownloadFolder") : L("MissingPatchFolder"));
+        }
+
+        if (missingFields.Count > 0)
+        {
+            _requiredFieldsLabel.Text = LF("MissingPrefix", string.Join(", ", missingFields));
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+            WriteLog($"ERROR: {L("RequiredFieldsLog")}");
+            return;
+        }
+
+        // Keep the active metadata unchanged through confirmations and downloads.
+        _versionDataCancellation?.Cancel();
+        DownpatchVersion? selectedVersion = GetSelectedVersion();
+        if (selectedVersion is null)
+        {
+            ShowErrorKey("SelectedVersionInvalid");
+            return;
+        }
+
+        if (selectedVersion.ManifestIds.Length != DepotIds.Length)
+        {
+            ShowErrorKey("InvalidManifestData");
+            return;
+        }
+
+        string? fileListPath = null;
+        if (!downloadAllFiles)
+        {
+            // Steam or another tool may have changed the executable since folder selection.
+            try
+            {
+                _installedVersion = DetectInstalledVersion(_doomRootFolder!);
+            }
+            catch (Exception exception)
+            {
+                ShowError(exception.Message);
+                return;
+            }
+
+            if (_installedVersion is null)
+            {
+                ApplyLanguage();
+                OfferFullDownloadForUnknownVersion();
+                return;
+            }
+
+            int targetIndex = GetVersionIndex(selectedVersion.Name);
+            int installedIndex = GetVersionIndex(_installedVersion.Name);
+            if (targetIndex < 0 || installedIndex < 0)
+            {
+                ShowErrorKey("UnableCompareVersions");
+                return;
+            }
+
+            if (targetIndex >= installedIndex)
+            {
+                ShowErrorKey("TargetMustBeOlder");
+                return;
+            }
+
+            try
+            {
+                fileListPath = BuildGeneratedFileListPath(selectedVersion);
+            }
+            catch (Exception exception)
+            {
+                ShowErrorKey("GenerateFilelistFailed", exception.Message);
+                return;
+            }
+        }
+
+        string? depotDownloaderPath = FindDepotDownloaderPath();
+        if (depotDownloaderPath is null)
+        {
+            ShowErrorKey("DepotDownloaderMissing");
+            return;
+        }
+
+        string outputFolder;
+        try
+        {
+            outputFolder = Path.GetFullPath(_downpatchFolderTextBox.Text.Trim());
+            PathSafety.ValidateOutput(outputFolder, GetAppWorkingFolder(), _doomRootFolder);
+        }
+        catch (Exception exception)
+        {
+            ShowError(exception.Message);
+            return;
+        }
+
+        string? doomRootFolder = null;
+        if (!downloadAllFiles)
+        {
+            doomRootFolder = Path.GetFullPath(_doomRootFolder!);
+            if (!IsValidDoomRootFolder(doomRootFolder))
+            {
+                ShowErrorKey("InvalidDoomRootFolder");
+                return;
+            }
+
+            if (AreSameDirectory(outputFolder, doomRootFolder))
+            {
+                ShowErrorKey("PatchFolderSameAsGame");
+                return;
+            }
+
+            if (IsSubdirectoryOf(doomRootFolder, outputFolder))
+            {
+                ShowErrorKey("DoomFolderInsidePatchFolder");
+                return;
+            }
+        }
+        else
+        {
+            if (IsValidDoomRootFolder(outputFolder))
+            {
+                ShowErrorKey("DownloadFolderIsDoomRoot");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(_doomRootFolder) && AreSameDirectory(outputFolder, _doomRootFolder))
+            {
+                ShowErrorKey("DownloadFolderSameAsRoot");
+                return;
+            }
+        }
+
+        if (!Directory.Exists(outputFolder))
+        {
+            DialogResult createFolderResult = MessageBox.Show(this, downloadAllFiles ? L("DownloadFolderDoesNotExistCreate") : L("PatchFolderDoesNotExistCreate"), downloadAllFiles ? L("CreateDownloadFolder") : L("CreatePatchFolder"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (createFolderResult != DialogResult.Yes)
+            {
+                WriteLog("Operation cancelled. Output folder was not created.");
+                return;
+            }
+
+            Directory.CreateDirectory(outputFolder);
+            WriteLog($"Created output folder: {outputFolder}");
+        }
+
+        if (Directory.EnumerateFileSystemEntries(outputFolder).Any())
+        {
+            DialogResult clearResult = MessageBox.Show(this, downloadAllFiles ? "The selected download folder is not empty.\n\nDownload All Files should use an empty folder.\n\nClear it now?" : "The selected patch files folder is not empty.\n\nIt should be cleared before downloading new downpatch files.\n\nClear it now?", "Clear output folder", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (clearResult != DialogResult.Yes)
+            {
+                WriteLog("Operation cancelled. Output folder was not cleared.");
+                return;
+            }
+
+            ClearDirectory(outputFolder);
+            WriteLog("Output folder cleared.");
+        }
+
+        DialogResult result = MessageBox.Show(this, downloadAllFiles ? "This will download a full standalone copy of the selected DOOM Eternal version.\n\nIt will not modify your selected Steam install.\n\nContinue?" : "This will download downpatch files using DepotDownloader and then apply them to the selected DOOM Eternal root folder.\n\nExisting replaced files will be backed up first.\n\nContinue?", downloadAllFiles ? "Download all files" : "Start downpatch", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+        if (result != DialogResult.Yes)
+        {
+            WriteLog("Operation cancelled before download.");
+            return;
+        }
+
+        _requiredFieldsLabel.Text = L("Ready");
+        ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+        _operationCancellation = new CancellationTokenSource();
+        bool validateFiles = _validateFilesCheckBox.Checked;
+        DownpatchVersion? sourceVersion = downloadAllFiles ? null : _installedVersion;
+        SetRunningState(true);
+        try
+        {
+            SaveSteamCredentials();
+            WriteLog($"Mode: {(downloadAllFiles ? "Download All Files" : "Patch existing install")}");
+            WriteLog($"Selected version: {selectedVersion.Name}");
+            WriteLog($"Steam account: {_steamUsernameTextBox.Text.Trim()}");
+            WriteLog($"DepotDownloader: {depotDownloaderPath}");
+            if (downloadAllFiles)
+            {
+                WriteLog("Filelist: disabled");
+                WriteLog($"Download folder: {outputFolder}");
+            }
+            else
+            {
+                WriteLog($"Filelist: {fileListPath}");
+                WriteLog($"Patch files folder: {outputFolder}");
+                WriteLog($"DOOM Eternal root folder: {doomRootFolder}");
+            }
+
+            _operationCancellation.Token.ThrowIfCancellationRequested();
+            WriteLog($"Downloading {DepotIds.Length} depots in one Steam session.");
+            await RunDepotDownloaderAsync(depotDownloaderPath, DepotIds, selectedVersion.ManifestIds,
+                fileListPath, !downloadAllFiles, validateFiles, _steamUsernameTextBox.Text.Trim(),
+                _steamPasswordTextBox.Text, _userSettings.RememberPassword, outputFolder,
+                _operationCancellation.Token);
+
+            string downloadedExe = Path.Combine(outputFolder, "DOOMEternalx64vk.exe");
+            if (!File.Exists(downloadedExe))
+            {
+                throw new InvalidOperationException(L("DownloadedExecutableMissing"));
+            }
+
+            if (!long.TryParse(selectedVersion.Size, out long expectedSize) || new FileInfo(downloadedExe).Length != expectedSize)
+                throw new InvalidOperationException(L("DownloadedExecutableMismatch"));
+            WriteLog("Download completed.");
+            if (downloadAllFiles)
+            {
+                EnsureSteamAppIdFile(outputFolder);
+                WriteLog("steam_appid.txt created.");
+                WriteLog("Download All Files completed successfully.");
+                MessageBox.Show(this, "Download All Files completed successfully.\n\nYou can add DOOMEternalx64vk.exe as a Non-Steam Game.", "EternalDownpatcher", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            _installedVersion = DetectInstalledVersion(doomRootFolder!);
+            if (_installedVersion is null || _installedVersion.Name != sourceVersion!.Name)
+            {
+                RefreshDownpatchVersions();
+                ApplyLanguage();
+                throw new InvalidOperationException(L("SourceVersionChanged"));
+            }
+
+            string backupFolder = Path.Combine(doomRootFolder!, "EternalDownpatcher_Backup_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + "_" + Guid.NewGuid().ToString("N")[..8]);
+            WriteLog($"Backup folder: {backupFolder}");
+            WriteLog("Applying patch files...");
+            int copiedFiles = await Task.Run(() => PatchBackup.Apply(outputFolder, doomRootFolder!, backupFolder, _operationCancellation.Token, count =>
+            {
+                if (count % 100 == 0)
+                    WriteLogThreadSafe($"Copied files: {count}");
+            }), _operationCancellation.Token);
+            _installedVersion = DetectInstalledVersion(doomRootFolder!);
+            RefreshDownpatchVersions();
+            ApplyLanguage();
+            WriteLog($"Completed. Files copied: {copiedFiles}");
+            WriteLog("Downpatch completed successfully.");
+            MessageBox.Show(this, "Downpatch completed successfully.", "EternalDownpatcher", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (OperationCanceledException)
+        {
+            WriteLog("Operation cancelled.");
+        }
+        catch (Exception exception)
+        {
+            WriteLog($"ERROR: {exception.Message}");
+            MessageBox.Show(this, exception.Message, "EternalDownpatcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            _operationCancellation?.Dispose();
+            _operationCancellation = null;
+            SetRunningState(false);
+        }
+    }
+
+    private void CancelButton_Click(object? sender, EventArgs e)
+    {
+        _operationCancellation?.Cancel();
+        WriteLog("Cancelling operation.");
+    }
+
+    private void SelectGameFolderButton_Click(object? sender, EventArgs e)
+    {
+        using FolderBrowserDialog dialog = new()
+        {
+            Description = "Select DOOM Eternal root folder",
+            UseDescriptionForTitle = true
+        };
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        string selectedPath = Path.GetFullPath(dialog.SelectedPath);
+        if (!IsValidDoomRootFolder(selectedPath))
+        {
+            _doomRootFolder = null;
+            _installedVersion = null;
+            _gameFolderStatusLabel.Text = L("InvalidDoomRootFolderShort");
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+            RefreshDownpatchVersions();
+            WriteLog($"ERROR: {L("InvalidFolderNoExe")}");
+            MessageBox.Show(this, L("InvalidFolderNoExe"), "EternalDownpatcher", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            return;
+        }
+
+        _doomRootFolder = selectedPath;
+        try
+        {
+            _installedVersion = DetectInstalledVersion(selectedPath);
+        }
+        catch (Exception exception)
+        {
+            _installedVersion = null;
+            RefreshDownpatchVersions();
+            ApplyLanguage();
+            ShowError(exception.Message);
+            return;
+        }
+
+        if (_installedVersion is null)
+        {
+            _gameFolderStatusLabel.Text = L("RootSelectedButVersionNotDetected");
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+            RefreshDownpatchVersions();
+            WriteLog($"DOOM Eternal folder: {selectedPath}");
+            OfferFullDownloadForUnknownVersion();
+            return;
+        }
+
+        _gameFolderStatusLabel.Text = string.Format(L("RootSelected"), _installedVersion.Name);
+        ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+        WriteLog($"DOOM Eternal folder: {selectedPath}");
+        WriteLog($"Installed DOOM Eternal version: {_installedVersion.Name}");
+        RefreshDownpatchVersions();
+    }
+
+    private void SelectDownpatchFolderButton_Click(object? sender, EventArgs e)
+    {
+        using FolderBrowserDialog dialog = new()
+        {
+            Description = "Select patch files folder",
+            UseDescriptionForTitle = true,
+            InitialDirectory = Directory.Exists(_downpatchFolderTextBox.Text) ? _downpatchFolderTextBox.Text : GetAppWorkingFolder()
+        };
+        if (dialog.ShowDialog(this) != DialogResult.OK)
+        {
+            return;
+        }
+
+        _downpatchFolderTextBox.Text = Path.GetFullPath(dialog.SelectedPath);
+        WriteLog($"Patch files folder: {_downpatchFolderTextBox.Text}");
+    }
+
+    private void SetRunningState(bool isRunning)
+    {
+        _isRunning = isRunning;
+        _startButton.Enabled = !isRunning && _versions.Count > 0;
+        _cancelButton.Enabled = isRunning;
+        _selectGameFolderButton.Enabled = !isRunning && !_downloadAllFilesRadioButton.Checked;
+        _selectDownpatchFolderButton.Enabled = !isRunning;
+        _versionComboBox.Enabled = !isRunning;
+        _steamUsernameTextBox.Enabled = !isRunning;
+        _steamPasswordTextBox.Enabled = !isRunning;
+        _downloadAllFilesRadioButton.Enabled = !isRunning;
+        _patchExistingRadioButton.Enabled = !isRunning;
+        _validateFilesCheckBox.Enabled = !isRunning && !_downloadAllFilesRadioButton.Checked;
+        _restoreBackupButton.Enabled = !isRunning;
+        _openOutputFolderButton.Enabled = !isRunning;
+        _themeToggleButton.Enabled = !isRunning;
+        _settingsButton.Enabled = !isRunning;
+    }
+
+    private void DownloadMode_CheckedChanged(object? sender, EventArgs e)
+    {
+        if (_downloadAllFilesRadioButton.Checked)
+        {
+            _startButton.Text = L("Download");
+            _folderLabel.Text = L("DownloadFolder");
+            _validateFilesCheckBox.Checked = false;
+            _validateFilesCheckBox.Enabled = false;
+            _selectGameFolderButton.Enabled = false;
+            _gameFolderStatusLabel.Text = L("DownloadAllFilesStatus");
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+            WriteLog("Download All Files mode enabled.");
+        }
+        else
+        {
+            _startButton.Text = L("Downpatch");
+            _folderLabel.Text = L("PatchFilesFolder");
+            _validateFilesCheckBox.Enabled = !_isRunning;
+            _selectGameFolderButton.Enabled = !_isRunning;
+            if (_doomRootFolder is null)
+            {
+                _gameFolderStatusLabel.Text = L("RootNotSelected");
+            }
+            else if (_installedVersion is not null)
+            {
+                _gameFolderStatusLabel.Text = string.Format(L("RootSelected"), _installedVersion.Name);
+            }
+
+            ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+            WriteLog("Patch existing install mode enabled.");
+        }
+
+        RefreshDownpatchVersions();
+        ApplyLanguage();
+    }
+
+    #endregion
+
+    #region Versions and file lists
+
+    private void LoadVersions()
+    {
+        string? cachedFolder = VersionDataCache.FindCurrentFolder(VersionDataCache.CacheRoot);
+        string[] folders = [cachedFolder ?? "", Path.Combine(GetAppWorkingFolder(), "data"), Path.Combine(AppContext.BaseDirectory, "data")];
+        foreach (string folder in folders.Where(folder => !string.IsNullOrEmpty(folder)).Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            if (!File.Exists(Path.Combine(folder, "versions.json")))
+                continue;
+            try
+            {
+                ApplyVersionData(folder);
+                return;
+            }
+            catch (Exception exception)
+            {
+                WriteLog(LF("LoadVersionsFailed", exception.Message));
+            }
+        }
+
+        // The startup update can recover even if the bundled data folder is missing.
+        _startButton.Enabled = false;
+        WriteLog(L("VersionsJsonNotFound"));
+    }
+
+    private void ApplyVersionData(string folder)
+    {
+        string path = Path.Combine(folder, "versions.json");
+        List<DownpatchVersion> versions = ReadVersionsJson(path);
+        _versionDataFolder = Path.GetFullPath(folder);
+        _versions.Clear();
+        _versions.AddRange(versions);
+        if (_doomRootFolder is not null)
+            _installedVersion = DetectInstalledVersion(_doomRootFolder);
+        RefreshDownpatchVersions();
+        ApplyLanguage();
+        _startButton.Enabled = !_isRunning && _versions.Count > 0;
+        WriteLog(LF("LoadedVersionsLog", _versions.Count));
+        WriteLog(LF("VersionsSourceLog", path));
+    }
+
+    private async Task UpdateVersionDataAsync(Func<CancellationToken, Task<string>>? refreshVersionData = null)
+    {
+        if (_versionDataCancellation is not null || IsDisposed || Disposing)
+            return;
+        using CancellationTokenSource cancellation = new();
+        _versionDataCancellation = cancellation;
+        WriteLog(L("CheckingVersionData"));
+        try
+        {
+            string folder = await (refreshVersionData ?? DownloadVersionDataAsync)(cancellation.Token);
+            // Cancellation can race with a completed download queued on the UI thread.
+            if (cancellation.IsCancellationRequested || _isRunning || IsDisposed || Disposing)
+                return;
+            ApplyVersionData(folder);
+            WriteLog(L("VersionDataReady"));
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            // Starting a game operation or closing the window cancels only this check.
+        }
+        catch (Exception exception)
+        {
+            if (cancellation.IsCancellationRequested || IsDisposed || Disposing)
+                return;
+            string reason = exception is OperationCanceledException ? L("VersionDataCancelled") : exception.Message;
+            WriteLog(LF("VersionDataFallback", reason));
+            if (_versions.Count == 0)
+                ShowErrorKey("VersionsJsonNotFound");
+        }
+        finally
+        {
+            if (ReferenceEquals(_versionDataCancellation, cancellation))
+                _versionDataCancellation = null;
+        }
+    }
+
+    private static async Task<string> DownloadVersionDataAsync(CancellationToken cancellationToken)
+    {
+        using HttpClient client = new() { Timeout = TimeSpan.FromSeconds(15) };
+        client.DefaultRequestHeaders.UserAgent.ParseAdd($"EternalDownpatcher/{AppVersion}");
+        return await VersionDataCache.RefreshAsync(VersionDataCache.CacheRoot, client, cancellationToken).ConfigureAwait(false);
+    }
+
+    private void EnsureDefaultVersionSelection()
+    {
+        if (_versionComboBox.Items.Count <= 0)
+        {
+            _versionComboBox.SelectedIndex = -1;
+            return;
+        }
+
+        if (_versionComboBox.SelectedIndex >= 0)
+        {
+            return;
+        }
+
+        int defaultIndex = _versionComboBox.Items.IndexOf("1.1"); //default downpatch version
+        _versionComboBox.SelectedIndex = defaultIndex >= 0 ? defaultIndex : 0;
+    }
+
+    private string? FindVersionsJsonPath()
+    {
+        return _versionDataFolder is null ? null : Path.Combine(_versionDataFolder, "versions.json");
+    }
+
+    private static List<DownpatchVersion> ReadVersionsJson(string path, bool strict = false)
+    {
+        string json = File.ReadAllText(path);
+        using JsonDocument document = JsonDocument.Parse(json);
+        JsonElement versionsElement;
+        if (document.RootElement.ValueKind == JsonValueKind.Array)
+        {
+            versionsElement = document.RootElement;
+        }
+        else if (document.RootElement.ValueKind == JsonValueKind.Object && document.RootElement.TryGetProperty("versions", out JsonElement nestedVersions))
+        {
+            versionsElement = nestedVersions;
+        }
+        else
+        {
+            throw new InvalidOperationException("versions.json has unsupported structure.");
+        }
+
+        List<DownpatchVersion> versions = [];
+        foreach (JsonElement element in versionsElement.EnumerateArray())
+        {
+            string? name = GetStringProperty(element, "name", "version", "versionName");
+            if (string.IsNullOrWhiteSpace(name))
+            {
+                continue;
+            }
+
+            if (!TryGetProperty(element, out JsonElement manifestIdsElement, "manifestIds", "manifests"))
+            {
+                continue;
+            }
+
+            if (manifestIdsElement.ValueKind != JsonValueKind.Array)
+            {
+                continue;
+            }
+
+            List<string> manifestIds = [];
+            foreach (JsonElement manifestIdElement in manifestIdsElement.EnumerateArray())
+            {
+                if (manifestIdElement.ValueKind == JsonValueKind.String)
+                {
+                    string? manifestId = manifestIdElement.GetString();
+                    if (!string.IsNullOrWhiteSpace(manifestId))
+                    {
+                        manifestIds.Add(manifestId.Trim());
+                    }
+                }
+                else if (manifestIdElement.ValueKind == JsonValueKind.Number)
+                {
+                    manifestIds.Add(manifestIdElement.GetRawText());
+                }
+            }
+
+            if (manifestIds.Count != DepotIds.Length)
+            {
+                continue;
+            }
+
+            string size = GetStringProperty(element, "size") ?? "";
+            versions.Add(new DownpatchVersion(name.Trim(), size.Trim(), manifestIds.ToArray()));
+        }
+
+        if (versions.Count == 0)
+        {
+            throw new InvalidOperationException("No valid versions were found in versions.json.");
+        }
+
+        if (strict)
+        {
+            HashSet<string> names = new(StringComparer.OrdinalIgnoreCase);
+            if (versions.Count != versionsElement.GetArrayLength())
+                throw new InvalidDataException("versions.json contains incomplete version entries.");
+            foreach (DownpatchVersion version in versions)
+            {
+                if (!Regex.IsMatch(version.Name, @"\A[0-9]+(?:\.[0-9]+)*\z") || !names.Add(version.Name) ||
+                    !long.TryParse(version.Size, out long size) || size <= 0 ||
+                    version.ManifestIds.Any(id => !ulong.TryParse(id, out ulong value) || value == 0))
+                    throw new InvalidDataException($"Invalid version metadata: {version.Name}");
+            }
+        }
+
+        return versions;
+    }
+
+    internal static void ValidateVersionDataFolder(string folder)
+    {
+        string jsonPath = PathSafety.Resolve(folder, "versions.json");
+        if (!File.Exists(jsonPath) || new FileInfo(jsonPath).Length > 1024 * 1024)
+            throw new InvalidDataException("Missing or oversized versions.json.");
+        List<DownpatchVersion> versions = ReadVersionsJson(jsonPath, strict: true);
+        IEnumerable<string> requiredLists = versions.Skip(1).Select(version => version.Name);
+        // 1.0 uses this additional list; there is deliberately no 1.0.txt.
+        if (versions.Any(version => version.Name == "1.0"))
+            requiredLists = requiredLists.Append("1.1.0");
+        foreach (string name in requiredLists.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            string path = PathSafety.Resolve(folder, name + ".txt");
+            if (!File.Exists(path) || new FileInfo(path).Length > 1024 * 1024)
+                throw new InvalidDataException($"Missing or oversized filelist: {name}.txt");
+            string[] files = ReadFileListEntries(path).ToArray();
+            if (files.Length == 0)
+                throw new InvalidDataException($"Empty filelist: {name}.txt");
+            foreach (string file in files)
+                ValidateFileListPath(file);
+        }
+    }
+
+    private static void ValidateFileListPath(string file)
+    {
+        // These are game-relative names in a text file, not paths to open in the cache.
+        // Check their syntax without probing the filesystem for every game file.
+        string[] parts = file.Split(['/', '\\']);
+        if (string.IsNullOrWhiteSpace(file) || Path.IsPathRooted(file) ||
+            parts.Any(part => part is "" or "." or ".." || part.EndsWith(' ') || part.EndsWith('.') ||
+                part.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0))
+            throw new InvalidDataException($"Invalid filelist path: {file}");
+    }
+
+    private void RefreshDownpatchVersions()
+    {
+        string? selectedBefore = _versionComboBox.SelectedItem?.ToString();
+        _versionComboBox.Items.Clear();
+        if (_installedVersion is null || _downloadAllFilesRadioButton.Checked)
+        {
+            foreach (DownpatchVersion version in _versions)
+            {
+                _versionComboBox.Items.Add(version.Name);
+            }
+
+            if (!string.IsNullOrWhiteSpace(selectedBefore) && _versionComboBox.Items.Contains(selectedBefore))
+            {
+                _versionComboBox.SelectedItem = selectedBefore;
+            }
+            else
+            {
+                EnsureDefaultVersionSelection();
+            }
+
+            return;
+        }
+
+        int installedIndex = GetVersionIndex(_installedVersion.Name);
+        if (installedIndex <= 0)
+        {
+            _versionComboBox.SelectedIndex = -1;
+            WriteLog("No older downpatch versions are available.");
+            return;
+        }
+
+        for (int i = 0; i < installedIndex; i++)
+        {
+            _versionComboBox.Items.Add(_versions[i].Name);
+        }
+
+        if (!string.IsNullOrWhiteSpace(selectedBefore) && _versionComboBox.Items.Contains(selectedBefore))
+        {
+            _versionComboBox.SelectedItem = selectedBefore;
+        }
+        else
+        {
+            EnsureDefaultVersionSelection();
+        }
+
+        WriteLog($"Detected installed version: {_installedVersion.Name}");
+        WriteLog($"Available downpatch versions: {_versionComboBox.Items.Count}");
+    }
+
+    private int GetVersionIndex(string versionName)
+    {
+        return _versions.FindIndex(version => string.Equals(version.Name, versionName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private DownpatchVersion? DetectInstalledVersion(string doomRootFolder)
+    {
+        string exePath = Path.Combine(doomRootFolder, "DOOMEternalx64vk.exe");
+        _installedExecutableSize = null;
+        if (!File.Exists(exePath))
+        {
+            return null;
+        }
+
+        long exeSize = new FileInfo(exePath).Length;
+        _installedExecutableSize = exeSize;
+        WriteLog($"DOOM Eternal executable: {exePath}");
+        WriteLog($"Executable size: {exeSize} bytes");
+        WriteLog($"Versions source: {FindVersionsJsonPath() ?? "not found"}");
+        foreach (DownpatchVersion version in _versions)
+        {
+            if (!long.TryParse(version.Size.Trim(), out long versionSize))
+            {
+                continue;
+            }
+
+            if (versionSize == exeSize)
+            {
+                return version;
+            }
+        }
+
+        return null;
+    }
+
+    private void OfferFullDownloadForUnknownVersion()
+    {
+        string message = LF("UnknownVersionRecovery", _installedExecutableSize?.ToString() ?? "?", _versions.LastOrDefault()?.Name ?? "?");
+        WriteLog(message.Replace("\n", " "));
+        if (MessageBox.Show(this, message, "EternalDownpatcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
+            _downloadAllFilesRadioButton.Checked = true;
+    }
+
+    private string BuildGeneratedFileListPath(DownpatchVersion targetVersion)
+    {
+        if (_installedVersion is null)
+        {
+            throw new InvalidOperationException(L("InstalledVersionNotDetected"));
+        }
+
+        int targetIndex = GetVersionIndex(targetVersion.Name);
+        int installedIndex = GetVersionIndex(_installedVersion.Name);
+        if (targetIndex < 0)
+        {
+            throw new InvalidOperationException("Target version was not found in versions list.");
+        }
+
+        if (installedIndex < 0)
+        {
+            throw new InvalidOperationException("Installed version was not found in versions list.");
+        }
+
+        if (targetIndex >= installedIndex)
+        {
+            throw new InvalidOperationException(L("TargetMustBeOlder"));
+        }
+
+        HashSet<string> aggregatedFiles = new(StringComparer.OrdinalIgnoreCase);
+        List<string> includedFileLists = [];
+        WriteLog($"Target version: {targetVersion.Name}");
+        WriteLog($"Installed version: {_installedVersion.Name}");
+        if (string.Equals(targetVersion.Name, "1.0", StringComparison.OrdinalIgnoreCase) && FindRawFileListPath("1.1.0")is not null)
+        {
+            includedFileLists.Add("1.1.0");
+        }
+
+        for (int i = targetIndex + 1; i <= installedIndex; i++)
+        {
+            includedFileLists.Add(_versions[i].Name);
+        }
+
+        WriteLog("Included filelists:");
+        foreach (string intermediateName in includedFileLists)
+        {
+            string? fileListPath = FindRawFileListPath(intermediateName);
+            if (fileListPath is null)
+            {
+                throw new InvalidOperationException($"Filelist for intermediate version {intermediateName} was not found.");
+            }
+
+            int addedFromThisFile = 0;
+            foreach (string file in ReadFileListEntries(fileListPath))
+            {
+                if (aggregatedFiles.Add(file))
+                {
+                    addedFromThisFile++;
+                }
+            }
+
+            WriteLog($"- {intermediateName}: {addedFromThisFile} new entries");
+        }
+
+        if (aggregatedFiles.Count == 0)
+        {
+            throw new InvalidOperationException("Generated filelist is empty.");
+        }
+
+        string generatedFileListPath = Path.Combine(GetAppWorkingFolder(), "filelist.txt");
+        using StreamWriter writer = new(generatedFileListPath, false);
+        foreach (string file in aggregatedFiles.OrderBy(file => file, StringComparer.OrdinalIgnoreCase))
+        {
+            writer.WriteLine("regex:" + Regex.Escape(file));
+        }
+
+        WriteLog($"Generated filelist: {generatedFileListPath}");
+        WriteLog($"Generated filelist entries: {aggregatedFiles.Count}");
+        return generatedFileListPath;
+    }
+
+    private static IEnumerable<string> ReadFileListEntries(string fileListPath)
+    {
+        string text = File.ReadAllText(fileListPath);
+        string[] entries = text.Split([' ', '\r', '\n', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        foreach (string entry in entries)
+        {
+            string file = entry.Trim();
+            if (string.IsNullOrWhiteSpace(file))
+            {
+                continue;
+            }
+
+            if (file.StartsWith("regex:", StringComparison.OrdinalIgnoreCase))
+            {
+                file = file["regex:".Length..];
+            }
+
+            yield return file;
+        }
+    }
+
+    private string? FindRawFileListPath(string versionName)
+    {
+        string[] dataFolders = _versionDataFolder is null ? [] : [_versionDataFolder];
+        string[] wantedNames = [versionName, versionName + ".txt"];
+        foreach (string dataFolder in dataFolders)
+        {
+            if (!Directory.Exists(dataFolder))
+            {
+                continue;
+            }
+
+            foreach (string wantedName in wantedNames)
+            {
+                string directPath = Path.Combine(dataFolder, wantedName);
+                if (File.Exists(directPath))
+                {
+                    return Path.GetFullPath(directPath);
+                }
+            }
+
+            foreach (string file in Directory.EnumerateFiles(dataFolder))
+            {
+                string fileName = Path.GetFileName(file);
+                foreach (string wantedName in wantedNames)
+                {
+                    if (string.Equals(fileName, wantedName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return Path.GetFullPath(file);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static string? GetStringProperty(JsonElement element, params string[] names)
+    {
+        foreach (string name in names)
+        {
+            if (!element.TryGetProperty(name, out JsonElement property))
+            {
+                continue;
+            }
+
+            return property.ValueKind switch
+            {
+                JsonValueKind.String => property.GetString(),
+                JsonValueKind.Number => property.GetRawText(),
+                _ => null
+            };
+        }
+
+        return null;
+    }
+
+    private static bool TryGetProperty(JsonElement element, out JsonElement value, params string[] names)
+    {
+        foreach (string name in names)
+        {
+            if (element.TryGetProperty(name, out value))
+            {
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private DownpatchVersion? GetSelectedVersion()
+    {
+        string? selectedName = _versionComboBox.SelectedItem?.ToString();
+        if (string.IsNullOrWhiteSpace(selectedName))
+        {
+            return null;
+        }
+
+        return _versions.FirstOrDefault(version => string.Equals(version.Name, selectedName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private sealed record DownpatchVersion(string Name, string Size, string[] ManifestIds);
+
+    #endregion
+
+    #region Files and folders
+
+    private void OpenOutputFolderButton_Click(object? sender, EventArgs e)
+    {
+        string folder = _downpatchFolderTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(folder))
+        {
+            return;
+        }
+
+        if (!Directory.Exists(folder))
+        {
+            ShowErrorKey("OutputFolderDoesNotExist");
+            return;
+        }
+
+        Process.Start(new ProcessStartInfo { FileName = folder, UseShellExecute = true });
+    }
+
+    internal static string GetAppWorkingFolder()
+    {
+        string current = Environment.CurrentDirectory;
+        if (Directory.Exists(Path.Combine(current, "data")) || Directory.EnumerateFiles(current, "*.csproj").Any())
+        {
+            return current;
+        }
+
+        return AppContext.BaseDirectory;
+    }
+
+    private static string GetDefaultPatchFilesFolder()
+    {
+        return Path.Combine(GetAppWorkingFolder(), "DOWNPATCH_FILES");
+    }
+
+    private static void ClearDirectory(string folder)
+    {
+        foreach (string file in Directory.EnumerateFiles(folder))
+        {
+            File.Delete(file);
+        }
+
+        foreach (string directory in Directory.EnumerateDirectories(folder))
+        {
+            Directory.Delete(directory, true);
+        }
+    }
+
+    private static void EnsureSteamAppIdFile(string folder)
+    {
+        File.WriteAllText(Path.Combine(folder, "steam_appid.txt"), "782330");
+    }
+
+    private static bool IsValidDoomRootFolder(string folder)
+    {
+        return Directory.Exists(folder) && File.Exists(Path.Combine(folder, "DOOMEternalx64vk.exe"));
+    }
+
+    private static bool AreSameDirectory(string first, string second)
+    {
+        string firstFull = NormalizeDirectoryPath(first);
+        string secondFull = NormalizeDirectoryPath(second);
+        return string.Equals(firstFull, secondFull, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsSubdirectoryOf(string possibleChild, string possibleParent)
+    {
+        string child = NormalizeDirectoryPath(possibleChild);
+        string parent = NormalizeDirectoryPath(possibleParent);
+        return child.StartsWith(parent, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string NormalizeDirectoryPath(string path)
+    {
+        return Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+    }
+
+    #endregion
+}
+
+#region GitHub version data cache
+
+internal static class VersionDataCache
+{
+    internal const string ArchiveUrl = "https://codeload.github.com/mrshadowq5/EternalDownpatcher/zip/refs/heads/main";
+    private const int MaxArchiveBytes = 32 * 1024 * 1024;
+    private const int MaxMetadataBytes = 8 * 1024 * 1024;
+    private const int MaxFileBytes = 1024 * 1024;
+
+    internal static string CacheRoot => Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "EternalDownpatcher", "version-data");
+
+    internal static string? FindCurrentFolder(string cacheRoot)
+    {
+        try
+        {
+            string pointer = PathSafety.Resolve(cacheRoot, "current.txt");
+            if (!File.Exists(pointer) || new FileInfo(pointer).Length > 100)
+                return null;
+            string name = File.ReadAllText(pointer).Trim();
+            if (!Regex.IsMatch(name, @"\Asnapshot-[0-9a-f]{32}\z"))
+                return null;
+            string folder = PathSafety.Resolve(cacheRoot, name);
+            MainForm.ValidateVersionDataFolder(folder);
+            return folder;
+        }
+        catch (Exception)
+        {
+            // A missing, inaccessible or damaged cache must not prevent using bundled data.
+            return null;
+        }
+    }
+
+    internal static async Task<string> RefreshAsync(string cacheRoot, HttpClient client, CancellationToken cancellationToken)
+    {
+        // One archive represents one repository snapshot, even if main changes during the download.
+        using HttpResponseMessage response = await client.GetAsync(ArchiveUrl, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+        if (response.Content.Headers.ContentLength > MaxArchiveBytes)
+            throw new InvalidDataException("The GitHub archive is too large.");
+        using MemoryStream download = new();
+        using (Stream network = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+            await CopyLimitedAsync(network, download, MaxArchiveBytes, cancellationToken).ConfigureAwait(false);
+        download.Position = 0;
+        using ZipArchive archive = new(download, ZipArchiveMode.Read);
+        ZipArchiveEntry[] versionEntries = archive.Entries.Where(entry =>
+            Regex.IsMatch(entry.FullName, @"\A[^/]+/data/versions\.json\z")).ToArray();
+        if (versionEntries.Length != 1)
+            throw new InvalidDataException("The GitHub archive must contain data/versions.json.");
+        string prefix = versionEntries[0].FullName[..^"versions.json".Length];
+        ZipArchiveEntry[] entries = archive.Entries.Where(entry =>
+            entry.FullName.StartsWith(prefix, StringComparison.Ordinal) &&
+            entry.FullName == prefix + entry.Name &&
+            (entry.Name == "versions.json" || Regex.IsMatch(entry.Name, @"\A[0-9]+(?:\.[0-9]+)*\.txt\z"))).ToArray();
+        if (entries.Length > 512 || entries.Sum(entry => entry.Length) > MaxMetadataBytes ||
+            entries.Select(entry => entry.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != entries.Length)
+            throw new InvalidDataException("The GitHub metadata exceeds its limits or contains duplicate files.");
+
+        PathSafety.RejectLinks(cacheRoot);
+        Directory.CreateDirectory(cacheRoot);
+        string staging = Path.Combine(cacheRoot, "staging-" + Guid.NewGuid().ToString("N"));
+        string pointerTemp = Path.Combine(cacheRoot, "current-" + Guid.NewGuid().ToString("N") + ".tmp");
+        string? uncommittedSnapshot = null;
+        try
+        {
+            Directory.CreateDirectory(staging);
+            foreach (ZipArchiveEntry entry in entries)
+            {
+                if (entry.Length > MaxFileBytes)
+                    throw new InvalidDataException($"Metadata file is too large: {entry.Name}");
+                // Only the approved basename is used; no archive paths are extracted.
+                using Stream input = entry.Open();
+                using FileStream output = new(Path.Combine(staging, entry.Name), FileMode.CreateNew, FileAccess.Write);
+                await CopyLimitedAsync(input, output, MaxFileBytes, cancellationToken).ConfigureAwait(false);
+            }
+            cancellationToken.ThrowIfCancellationRequested();
+            MainForm.ValidateVersionDataFolder(staging);
+            string? current = FindCurrentFolder(cacheRoot);
+            if (current is not null && Fingerprint(current).SequenceEqual(Fingerprint(staging)))
+                return current;
+
+            string name = "snapshot-" + Guid.NewGuid().ToString("N");
+            string snapshot = Path.Combine(cacheRoot, name);
+            Directory.Move(staging, snapshot);
+            uncommittedSnapshot = snapshot;
+            await File.WriteAllTextAsync(pointerTemp, name, cancellationToken).ConfigureAwait(false);
+            cancellationToken.ThrowIfCancellationRequested();
+            string pointer = PathSafety.Resolve(cacheRoot, "current.txt");
+            // Publish only after every required file has been downloaded and validated.
+            File.Move(pointerTemp, pointer, overwrite: true);
+            uncommittedSnapshot = null;
+            return snapshot;
+        }
+        finally
+        {
+            TryDeleteTemporary(staging);
+            if (uncommittedSnapshot is not null)
+                TryDeleteTemporary(uncommittedSnapshot);
+            try { File.Delete(pointerTemp); }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+    }
+
+    private static byte[] Fingerprint(string folder)
+    {
+        using IncrementalHash hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        foreach (string file in Directory.EnumerateFiles(folder).OrderBy(Path.GetFileName, StringComparer.Ordinal))
+        {
+            hash.AppendData(System.Text.Encoding.UTF8.GetBytes(Path.GetFileName(file) + "\0"));
+            hash.AppendData(File.ReadAllBytes(file));
+        }
+        return hash.GetHashAndReset();
+    }
+
+    private static async Task CopyLimitedAsync(Stream input, Stream output, int limit, CancellationToken cancellationToken)
+    {
+        byte[] buffer = new byte[64 * 1024];
+        int total = 0;
+        int count;
+        while ((count = await input.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+        {
+            total += count;
+            if (total > limit)
+                throw new InvalidDataException("The downloaded data exceeds its size limit.");
+            await output.WriteAsync(buffer.AsMemory(0, count), cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    private static void TryDeleteTemporary(string folder)
+    {
+        try
+        {
+            PathSafety.RejectLinks(folder);
+            if (Directory.Exists(folder))
+                Directory.Delete(folder, recursive: true);
+        }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+        catch (InvalidOperationException) { }
+    }
+}
+
+#endregion
