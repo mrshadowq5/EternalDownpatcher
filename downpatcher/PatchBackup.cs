@@ -12,7 +12,7 @@ internal static class PatchBackup
     internal sealed record Manifest(int FormatVersion, Entry[] Files, string[] CreatedDirectories);
 
     public static int Apply(string source, string target, string backup,
-        CancellationToken cancellationToken, Action<int>? progress = null)
+        CancellationToken cancellationToken, Action<int>? progress = null, IReadOnlyCollection<string>? includedFiles = null)
     {
         PathSafety.RequireSeparate(source, target);
         PathSafety.RejectLinks(source);
@@ -23,7 +23,13 @@ internal static class PatchBackup
             Directory.Exists(backup))
             throw new InvalidOperationException("A new backup folder inside the game folder is required.");
 
-        Entry[] files = EnumeratePayload(source).Select(path =>
+        IEnumerable<string> payload = includedFiles is null ? EnumeratePayload(source) : includedFiles.Select(path =>
+        {
+            string full = PathSafety.Resolve(source, path);
+            if (!File.Exists(full)) throw new FileNotFoundException($"Missing downloaded file: {path}");
+            return Path.GetRelativePath(source, full);
+        }).Distinct(StringComparer.OrdinalIgnoreCase);
+        Entry[] files = payload.Select(path =>
         {
             string destination = PathSafety.Resolve(target, path);
             if (PathSafety.Contains(backup, destination) || PathSafety.Contains(destination, backup))
@@ -44,10 +50,10 @@ internal static class PatchBackup
         }
 
         string originals = Path.Combine(backup, "files");
-        // Finish every backup before replacing any game file.
+        // Finish every backup before replacing any game file
         Directory.CreateDirectory(originals);
         Manifest manifest = new(1, files, newDirectories.OrderByDescending(path => path.Length).ToArray());
-        // Mark the new format before copying, so an interrupted backup is never treated as legacy.
+        // Mark the new format before copying, so an interrupted backup is never treated as legacy
         File.WriteAllText(Path.Combine(backup, ManifestName), JsonSerializer.Serialize(manifest,
             new JsonSerializerOptions { WriteIndented = true }));
         foreach (Entry file in files.Where(file => file.Existed))
@@ -99,7 +105,7 @@ internal static class PatchBackup
             return true;
         }
 
-        // Older backups contain originals directly, without a record of added files.
+        // Older backups contain originals directly, without a record of added files
         string[] legacyFiles = EnumeratePayload(backup).ToArray();
         if (legacyFiles.Length == 0)
             throw new InvalidOperationException("The backup contains no files.");
@@ -116,7 +122,7 @@ internal static class PatchBackup
             throw new InvalidOperationException("Unsupported or incomplete backup manifest.");
         string originals = Path.Combine(backup, "files");
         HashSet<string> paths = new(StringComparer.OrdinalIgnoreCase);
-        // Validate the whole plan before changing the installation.
+        // Validate the whole plan before changing the installation
         foreach (Entry file in manifest.Files)
         {
             string destination = PathSafety.Resolve(target, file.Path);

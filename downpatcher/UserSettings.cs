@@ -10,6 +10,7 @@ namespace EternalDownpatcher.WinForms;
 
 public sealed class UserSettings
 {
+    public bool CreateBackup { get; set; } = true;
     public bool DarkMode { get; set; }
     public string Language { get; set; } = "en";
     public bool RememberLogin { get; set; } = true;

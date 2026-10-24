@@ -29,12 +29,12 @@ public sealed partial class MainForm : Form
         return DepotDownloaderSetup.FindInstalled(GetAppWorkingFolder(), AppContext.BaseDirectory);
     }
 
-    private async Task RunDepotDownloaderAsync(string depotDownloaderPath, IReadOnlyList<int> depotIds, IReadOnlyList<string> manifestIds, string? fileListPath, bool useFileList, bool validateFiles, string username, string password, bool rememberPassword, string outputFolder, CancellationToken cancellationToken)
+    private async Task RunDepotDownloaderAsync(string depotDownloaderPath, IReadOnlyList<int> depotIds, IReadOnlyList<string> manifestIds, string? fileListPath, bool useFileList, bool validateFiles, string username, string password, bool rememberPassword, string outputFolder, CancellationToken cancellationToken, bool manifestOnly = false)
     {
         if (useFileList && string.IsNullOrWhiteSpace(fileListPath))
             throw new InvalidOperationException("Filelist path is empty.");
         ProcessStartInfo startInfo = DepotDownloadCommand.Create(depotDownloaderPath, depotIds,
-            manifestIds, useFileList ? fileListPath : null, validateFiles, username, rememberPassword, outputFolder);
+            manifestIds, useFileList ? fileListPath : null, validateFiles, username, rememberPassword, outputFolder, manifestOnly);
         int exitCode = await DepotDownloaderRunner.RunAsync(startInfo, password, RequestSteamGuardCodeAsync,
             message => WriteLogThreadSafe($"DepotDownloader> {message}"), cancellationToken);
         if (exitCode != 0)
@@ -530,7 +530,7 @@ internal sealed class DepotDownloaderUpdateForm : Form
 internal static class DepotDownloadCommand
 {
     public static ProcessStartInfo Create(string executable, IReadOnlyList<int> depotIds, IReadOnlyList<string> manifestIds,
-        string? fileList, bool validate, string username, bool rememberPassword, string outputFolder)
+        string? fileList, bool validate, string username, bool rememberPassword, string outputFolder, bool manifestOnly = false)
     {
         ArgumentNullException.ThrowIfNull(depotIds);
         ArgumentNullException.ThrowIfNull(manifestIds);
@@ -554,6 +554,8 @@ internal static class DepotDownloadCommand
             StandardOutputEncoding = System.Text.Encoding.UTF8,
             StandardErrorEncoding = System.Text.Encoding.UTF8
         };
+        info.ArgumentList.Add("-max-downloads");
+        info.ArgumentList.Add("16");
         info.ArgumentList.Add("-app");
         info.ArgumentList.Add("782330");
         // DepotDownloader pairs each depot with the manifest at the same index.
@@ -572,6 +574,8 @@ internal static class DepotDownloadCommand
             info.ArgumentList.Add("-filelist");
             info.ArgumentList.Add(fileList);
         }
+        if (manifestOnly)
+            info.ArgumentList.Add("-manifest-only");
         if (validate)
             info.ArgumentList.Add("-validate");
         return info;

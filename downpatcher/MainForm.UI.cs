@@ -65,7 +65,7 @@ public sealed partial class MainForm : Form
         _requiredFieldsLabel.ForeColor = Color.Red;
         _folderLabel.Text = "Patch Files Folder";
         _folderLabel.Font = new Font(Font, FontStyle.Bold);
-        _folderLabel.SetBounds(12, 155, 180, 20);
+        _folderLabel.SetBounds(12, 155, 590, 20);
         _downpatchFolderTextBox.SetBounds(12, 177, 590, 25);
         _downpatchFolderTextBox.Text = GetDefaultPatchFilesFolder();
         _selectDownpatchFolderButton.SetBounds(610, 176, 98, 26);
@@ -116,7 +116,7 @@ public sealed partial class MainForm : Form
         _consoleBox.Font = new Font("Consolas", 9.5F);
         _consoleBox.BorderStyle = BorderStyle.FixedSingle;
         _consoleBox.ScrollBars = RichTextBoxScrollBars.Vertical;
-        _restoreBackupButton.SetBounds(365, 421, 125, 24);
+        _restoreBackupButton.SetBounds(345, 421, 145, 24);
         _restoreBackupButton.Text = "Restore Backup";
         _restoreBackupButton.Click += RestoreBackupButton_Click;
         _openOutputFolderButton.SetBounds(500, 421, 98, 24);
@@ -578,7 +578,9 @@ public sealed partial class MainForm : Form
         _userSettings.Language = settingsForm.SelectedLanguage;
         _userSettings.RememberLogin = settingsForm.RememberLogin;
         _userSettings.RememberPassword = settingsForm.RememberPassword;
+        _userSettings.CreateBackup = settingsForm.CreateBackup;
         SaveSteamCredentials();
+        RefreshDownpatchVersions();
         ApplyLanguage();
     }
 
@@ -603,6 +605,10 @@ public sealed partial class MainForm : Form
         {
             _gameFolderStatusLabel.Text = T(language, "DownloadAllFilesStatus");
         }
+        else if (_doomRootFolder is not null && FindPendingVersion(_doomRootFolder) is DownpatchVersion pendingVersion)
+        {
+            _gameFolderStatusLabel.Text = LF("PendingDirectStatus", pendingVersion.Name);
+        }
         else if (_doomRootFolder is null)
         {
             _gameFolderStatusLabel.Text = T(language, "RootNotSelected");
@@ -621,6 +627,7 @@ public sealed partial class MainForm : Form
             _requiredFieldsLabel.Text = T(language, "RequiredFieldsMissing");
         }
 
+        UpdateBackupMode();
         ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
     }
 
@@ -643,6 +650,26 @@ public sealed partial class MainForm : Form
             ["DownloadAllFiles"] = "Download All Files",
             ["PatchExistingMode"] = "Downpatch",
             ["ValidateFiles"] = "Validate files",
+            ["CreateBackup"] = "Create backup",
+            ["ManifestPlanning"] = "Preparing the download file list...",
+            ["ManifestSourceFallback"] = "Could not compare the source version: {0}. The full target file set will be checked.",
+            ["ManifestTargetFallback"] = "Could not prepare the manifest comparison: {0}. Using the full target file set.",
+            ["ManifestSelectionLog"] = "Selected {0} of {1} files: {2:F2} GB instead of {3:F2} GB of target data.",
+            ["ManifestPreparationNotice"] = "Matching files are kept. If the source version cannot be compared, the full target file set is used.",
+            ["BackupPatchConfirmation"] = "This will download the required files, back up replaced originals, then apply the selected version. Continue?",
+            ["VerifiedRollbackFiles"] = "Verified rollback: download/apply {0} changed files; matching files are kept.",
+            ["ReuseVerifiedDownload"] = "Keeping the download folder. Existing selected files will be verified and reused; unrelated files will not be applied.",
+            ["DirectReuseHint"] = "Backup off: check and update the game in place.",
+            ["DirectGameFolder"] = "Game folder (updated directly)",
+            ["NoBackupConfirmation"] = "Update this installation directly to version {0}?\n\n{1}\n\nBackup is OFF. Game files may be changed or removed during downloading. If interrupted, select the same version and start again to finish.\n\nExisting files will be checked and matching chunks reused. Continue?",
+            ["DirectTargetCheck"] = "All target files will be checked; missing or different data will be downloaded. The maximum download is a full game copy.",
+            ["DirectUpdateLog"] = "Backup is off. Updating the game directly and reusing existing data.",
+            ["DirectInterrupted"] = "The direct update did not finish. Select the same target version and start again with backup off to finish it.",
+            ["PendingDirectStatus"] = "Unfinished update to {0}. Resume with backup off.",
+            ["PendingDirectError"] = "Finish the interrupted update to {0} with backup off before choosing another target.",
+            ["DirectExecutableMissing"] = "The target executable is missing after the direct update. Run the same target again to finish.",
+            ["DirectExecutableMismatch"] = "The executable does not match the target version. Run the same target again to finish the direct update.",
+            ["BackupOptionSaveFailed"] = "Could not save the backup preference. It applies for this session.",
             ["OutputLog"] = "Output Log",
             ["CopyLog"] = "Copy Log",
             ["Browse"] = "Browse",
@@ -750,6 +777,26 @@ public sealed partial class MainForm : Form
             ["DownloadAllFiles"] = "Скачать все файлы",
             ["PatchExistingMode"] = "Откат игры",
             ["ValidateFiles"] = "Проверять файлы",
+            ["CreateBackup"] = "Создавать резервную копию",
+            ["ManifestPlanning"] = "Подготовка списка файлов для загрузки...",
+            ["ManifestSourceFallback"] = "Не удалось сравнить исходную версию: {0}. Будет проверен полный набор файлов выбранной версии.",
+            ["ManifestTargetFallback"] = "Не удалось подготовить сравнение манифестов: {0}. Используется полный набор файлов выбранной версии.",
+            ["ManifestSelectionLog"] = "Выбрано {0} из {1} файлов: {2:F2} ГБ вместо {3:F2} ГБ данных выбранной версии.",
+            ["ManifestPreparationNotice"] = "Совпадающие файлы сохраняются. Если сравнить исходную версию не удастся, используется полный набор файлов выбранной версии.",
+            ["BackupPatchConfirmation"] = "Будут загружены нужные файлы, сохранены заменяемые оригиналы и применена выбранная версия. Продолжить?",
+            ["VerifiedRollbackFiles"] = "Проверенный откат: загрузить и применить {0} изменённых файлов; совпадающие файлы сохраняются.",
+            ["ReuseVerifiedDownload"] = "Папка загрузки сохраняется. Нужные файлы будут проверены и использованы повторно; остальные файлы не будут применены.",
+            ["DirectReuseHint"] = "Без бэкапа: проверка и обновление в папке игры.",
+            ["DirectGameFolder"] = "Папка игры (обновление напрямую)",
+            ["NoBackupConfirmation"] = "Обновить эту установленную игру до версии {0} напрямую?\n\n{1}\n\nБэкап ВЫКЛЮЧЕН. Файлы игры могут меняться и удаляться уже во время загрузки. При прерывании выберите ту же версию и запустите снова для завершения.\n\nИмеющиеся файлы будут проверены, совпадающие части использованы повторно. Продолжить?",
+            ["DirectTargetCheck"] = "Будут проверены все файлы целевой версии и скачаны недостающие или отличающиеся данные. Максимальный объём — полная копия игры.",
+            ["DirectUpdateLog"] = "Бэкап отключён. Обновление идёт прямо в папке игры с повторным использованием имеющихся данных.",
+            ["DirectInterrupted"] = "Обновление напрямую не завершено. Выберите ту же версию и запустите снова с отключённым бэкапом для завершения.",
+            ["PendingDirectStatus"] = "Прервано обновление до {0}. Продолжите без бэкапа.",
+            ["PendingDirectError"] = "Сначала завершите прерванное обновление до {0} с отключённым бэкапом.",
+            ["DirectExecutableMissing"] = "После обновления отсутствует EXE целевой версии. Запустите ту же версию снова для завершения.",
+            ["DirectExecutableMismatch"] = "EXE не соответствует целевой версии. Запустите ту же версию снова для завершения обновления.",
+            ["BackupOptionSaveFailed"] = "Не удалось сохранить выбор бэкапа. Он действует в текущем сеансе.",
             ["OutputLog"] = "Лог",
             ["CopyLog"] = "Копировать лог",
             ["Browse"] = "Обзор",
@@ -857,6 +904,26 @@ public sealed partial class MainForm : Form
             ["DownloadAllFiles"] = "Descargar todo",
             ["PatchExistingMode"] = "Aplicar parche",
             ["ValidateFiles"] = "Validar archivos",
+            ["CreateBackup"] = "Crear copia de seguridad",
+            ["ManifestPlanning"] = "Preparando la lista de archivos...",
+            ["ManifestSourceFallback"] = "No se pudo comparar la versión de origen: {0}. Se comprobarán todos los archivos de destino.",
+            ["ManifestTargetFallback"] = "No se pudo preparar la comparación: {0}. Se usarán todos los archivos de destino.",
+            ["ManifestSelectionLog"] = "Seleccionados {0} de {1} archivos: {2:F2} GB en lugar de {3:F2} GB de datos de destino.",
+            ["ManifestPreparationNotice"] = "Se conservan los archivos idénticos. Si no se puede comparar el origen, se usa el conjunto completo de destino.",
+            ["BackupPatchConfirmation"] = "Se descargarán los archivos necesarios, se guardarán los originales reemplazados y se aplicará la versión elegida. ¿Continuar?",
+            ["VerifiedRollbackFiles"] = "Reversión verificada: descargar y aplicar {0} archivos modificados; se conservan los idénticos.",
+            ["ReuseVerifiedDownload"] = "Se conserva la carpeta de descarga. Los archivos seleccionados se verificarán y reutilizarán; los demás no se aplicarán.",
+            ["DirectReuseHint"] = "Sin copia: comprobar y actualizar el juego directamente.",
+            ["DirectGameFolder"] = "Carpeta del juego (actualización directa)",
+            ["NoBackupConfirmation"] = "¿Actualizar esta instalación directamente a la versión {0}?\n\n{1}\n\nLa copia de seguridad está DESACTIVADA. Los archivos pueden cambiar o eliminarse durante la descarga. Si se interrumpe, elige la misma versión y vuelve a iniciar para terminar.\n\nSe comprobarán los archivos existentes y se reutilizarán las partes coincidentes. ¿Continuar?",
+            ["DirectTargetCheck"] = "Se comprobarán todos los archivos de destino y se descargarán los datos que falten o difieran. El máximo es una copia completa del juego.",
+            ["DirectUpdateLog"] = "Sin copia de seguridad. Actualizando el juego directamente y reutilizando datos existentes.",
+            ["DirectInterrupted"] = "La actualización directa no terminó. Elige la misma versión y vuelve a iniciar sin copia para terminar.",
+            ["PendingDirectStatus"] = "Actualización a {0} incompleta. Continúa sin copia.",
+            ["PendingDirectError"] = "Termina la actualización interrumpida a {0} sin copia antes de elegir otro destino.",
+            ["DirectExecutableMissing"] = "Falta el ejecutable de destino. Vuelve a iniciar la misma versión para terminar.",
+            ["DirectExecutableMismatch"] = "El ejecutable no coincide con el destino. Vuelve a iniciar la misma versión para terminar la actualización.",
+            ["BackupOptionSaveFailed"] = "No se pudo guardar la opción de copia. Se aplica durante esta sesión.",
             ["OutputLog"] = "Registro",
             ["CopyLog"] = "Copiar registro",
             ["Browse"] = "Examinar",

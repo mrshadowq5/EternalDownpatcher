@@ -43,6 +43,8 @@ public sealed partial class MainForm : Form
     private readonly RadioButton _downloadAllFilesRadioButton = new();
     private readonly RadioButton _patchExistingRadioButton = new();
     private readonly CheckBox _validateFilesCheckBox = new();
+    private string? _savedOutputFolder;
+    private bool _savedValidateFiles;
     private readonly Func<UserSettings, bool> _saveCredentialSettings;
     private readonly Label _gameFolderStatusLabel = new();
     private readonly Label _requiredFieldsLabel = new();
