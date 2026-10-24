@@ -30,6 +30,8 @@ Read the full guide: **[English](docs/DOCUMENTATION.md)** · **[Русский](
 
 The guide also covers [Steam sign-in and options](docs/DOCUMENTATION.md#steam), [backups and troubleshooting](docs/DOCUMENTATION.md#support), and choosing an output folder.
 
+## Bulding from source
+
 To publish a Windows executable:
 
 ```powershell
