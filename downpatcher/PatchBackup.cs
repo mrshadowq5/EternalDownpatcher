@@ -259,8 +259,33 @@ internal static class PathSafety
             Contains(full, appFolder))
             throw new InvalidOperationException("Choose an output folder separate from the application folder and drive root.");
         RejectLinks(full);
+        if (File.Exists(full)) throw new IOException("The output path points to a file. Choose a folder.");
         if (gameFolder is not null)
             RequireSeparate(full, gameFolder);
+    }
+
+    internal static bool TryPrepareOutput(string output, Func<bool> confirmCreation, out bool reuseExisting, out string? error)
+    {
+        reuseExisting = false;
+        error = null;
+        try
+        {
+            RejectLinks(output);
+            if (File.Exists(output)) throw new IOException("The output path points to a file. Choose a folder.");
+            if (!Directory.Exists(output))
+            {
+                if (!confirmCreation()) return false;
+                Directory.CreateDirectory(output);
+            }
+            reuseExisting = Directory.EnumerateFileSystemEntries(output).Any();
+            return true;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or
+            System.Security.SecurityException or ArgumentException or NotSupportedException or InvalidOperationException)
+        {
+            error = exception.Message;
+            return false;
+        }
     }
 }
 

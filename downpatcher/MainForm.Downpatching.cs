@@ -292,20 +292,16 @@ public sealed partial class MainForm : Form
             }
         }
 
-        if (!directUpdate && !Directory.Exists(outputFolder))
+        bool reuseExistingOutput = false;
+        if (!directUpdate && !PathSafety.TryPrepareOutput(outputFolder,
+            () => MessageBox.Show(this, downloadAllFiles ? L("DownloadFolderDoesNotExistCreate") : L("PatchFolderDoesNotExistCreate"),
+                downloadAllFiles ? L("CreateDownloadFolder") : L("CreatePatchFolder"), MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes,
+            out reuseExistingOutput, out string? preparationError))
         {
-            DialogResult createFolderResult = MessageBox.Show(this, downloadAllFiles ? L("DownloadFolderDoesNotExistCreate") : L("PatchFolderDoesNotExistCreate"), downloadAllFiles ? L("CreateDownloadFolder") : L("CreatePatchFolder"), MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (createFolderResult != DialogResult.Yes)
-            {
-                WriteLog("Operation cancelled. Output folder was not created.");
-                return;
-            }
-
-            Directory.CreateDirectory(outputFolder);
-            WriteLog($"Created output folder: {outputFolder}");
+            if (preparationError is null) WriteLog("Operation cancelled. Output folder was not created.");
+            else ShowError(preparationError);
+            return;
         }
-
-        bool reuseExistingOutput = !directUpdate && Directory.EnumerateFileSystemEntries(outputFolder).Any();
         if (reuseExistingOutput)
             WriteLog(L("ReuseVerifiedDownload"));
 
@@ -387,15 +383,27 @@ public sealed partial class MainForm : Form
                 (folder, verifyExisting, token) => RunDepotDownloaderAsync(depotDownloaderPath, DepotIds, selectedVersion.ManifestIds,
                     fileListPath, !downloadAllFiles, verifyExisting, _steamUsernameTextBox.Text.Trim(),
                     _steamPasswordTextBox.Text, _userSettings.RememberPassword, folder, token),
-                (folder, token) => Task.Run(() =>
+                async (folder, token) =>
                 {
-                    string downloadedExe = Path.Combine(folder, "DOOMEternalx64vk.exe");
-                    if (!File.Exists(downloadedExe))
-                        throw new InvalidOperationException(L(directUpdate ? "DirectExecutableMissing" : "DownloadedExecutableMissing"));
-                    if (!long.TryParse(selectedVersion.Size, out long expectedSize) || new FileInfo(downloadedExe).Length != expectedSize)
-                        throw new InvalidOperationException(L(directUpdate ? "DirectExecutableMismatch" : "DownloadedExecutableMismatch"));
-                    SaveVersionReceipt(folder, selectedVersion, token);
-                }, token),
+                    // A successful downloader exit can still omit a depot. Resolve
+                    // all target metadata even when initial preparation fell back.
+                    if (selection is null)
+                    {
+                        SteamManifest[] target = await manifests.SnapshotAsync(selectedVersion.ManifestIds, token);
+                        selection = await Task.Run(() => ManifestRollbackPlanner.Compare(null, target, null, required, token), token);
+                    }
+                    _gameFolderStatusLabel.Text = L("VerifyingDownload");
+                    WriteLog(L("VerifyingDownload"));
+                    await Task.Run(() => DownloadedPayload.VerifyAsync(folder, selection, token,
+                        (count, total, path) => WriteLogThreadSafe(LF("VerifyDownloadFile", count, total, path))), token);
+                    await Task.Run(() =>
+                    {
+                        string downloadedExe = Path.Combine(folder, "DOOMEternalx64vk.exe");
+                        if (!long.TryParse(selectedVersion.Size, out long expectedSize) || new FileInfo(downloadedExe).Length != expectedSize)
+                            throw new InvalidOperationException(L(directUpdate ? "DirectExecutableMismatch" : "DownloadedExecutableMismatch"));
+                        SaveVersionReceipt(folder, selectedVersion, token);
+                    }, token);
+                },
                 () =>
                 {
                     _installedVersion = DetectInstalledVersion(doomRootFolder!);
@@ -404,13 +412,13 @@ public sealed partial class MainForm : Form
                 }, WriteLogThreadSafe, count =>
                 {
                     if (count % 100 == 0) WriteLogThreadSafe($"Copied files: {count}");
-                }, _operationCancellation.Token, async (folder, token) =>
+                }, _operationCancellation.Token, (_, token) =>
                 {
-                    // If preparation failed, the completed file download must have
-                    // cached the exact target manifests. Never apply stale extra files.
-                    SteamManifest[] target = await manifests.SnapshotAsync(selectedVersion.ManifestIds, token);
-                    ManifestSelection full = await Task.Run(() => ManifestRollbackPlanner.Compare(null, target, null, required, token), token);
-                    return selectedVersion.BuildId is null ? full.Files : full.Files.Append(VersionReceiptName).ToArray();
+                    token.ThrowIfCancellationRequested();
+                    // The verification callback resolved this set before writing a
+                    // receipt; only those verified paths may reach the game folder.
+                    string[] verified = selection?.Files ?? throw new InvalidOperationException("Target files were not verified.");
+                    return Task.FromResult(selectedVersion.BuildId is null ? verified : verified.Append(VersionReceiptName).ToArray());
                 });
             WriteLog("Download completed.");
             if (downloadAllFiles)
@@ -1045,7 +1053,7 @@ public sealed partial class MainForm : Form
         if (matches.Length == 1) return matches[0];
         DownpatchVersion? steamVersion = DetectSteamSnapshot(doomRootFolder, candidates.Where(version => version.DetectionFiles is not { Length: > 0 }).ToArray());
         if (steamVersion is not null) return steamVersion;
-        WriteLog(L("AmbiguousBuild"));
+        WriteLogThreadSafe(L("AmbiguousBuild"));
         return null;
     }
 

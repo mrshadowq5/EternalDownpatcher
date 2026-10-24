@@ -210,6 +210,7 @@ internal static class Program
         checks += UniversalManifestChecks.Run(root, args);
         checks += DeltaChecks.Run(root, form);
         checks += SpeedChecks.Run(root, form, args);
+        checks += DownloadVerificationChecks.Run(root);
         checks += RestoreChecks.Run(root, form, args);
         Console.WriteLine($"PASS: {checks} checks; all {pairs} rollback pairs, shared-EXE recognition, receipts, UI, GitHub snapshots and offline/invalid updates. No game or DepotDownloader executed.");
     }

@@ -144,6 +144,34 @@ internal static class RestoreChecks
         try { Wait((Task<bool>)Call(form, "RestoreBackupFilesAsync", badBackup, badGame)!); } catch (FileNotFoundException) { failed = true; }
         Check(failed && !Field<bool>(form, "_isRunning") && Field<Button>(form, "_restoreBackupButton").Enabled, "Restore error left the window locked.");
 
+        // Force the ambiguous-size branch after the background restore. Strict
+        // thread checks must stay enabled, and successful restore must clear pending.
+        var versions = Field<System.Collections.IList>(form, "_versions");
+        object[] originalVersions = versions.Cast<object>().ToArray();
+        string ambiguousData = Path.Combine(work, "ambiguous-versions.json");
+        File.WriteAllText(ambiguousData, System.Text.Json.JsonSerializer.Serialize(new { versions = new[] {
+            new { name = "1.0", size = "8", manifestIds = Enumerable.Range(1, 8).Select(i => i.ToString()).ToArray() },
+            new { name = "1.1", size = "8", manifestIds = Enumerable.Range(11, 8).Select(i => i.ToString()).ToArray() } } }));
+        var parsed = (System.Collections.IList)typeof(MainForm).GetMethod("ReadVersionsJson", BindingFlags.Static | BindingFlags.NonPublic)!
+            .Invoke(null, [ambiguousData, false])!;
+        versions.Clear(); foreach (object version in parsed) versions.Add(version);
+        try
+        {
+            string ambiguousBackup = MakeBackup(Path.Combine(work, "ambiguous"), 1), ambiguousGame = Path.GetDirectoryName(ambiguousBackup)!;
+            string ambiguousPending = Path.Combine(ambiguousGame, ".DepotDownloader", "eternaldownpatcher-pending.json");
+            Directory.CreateDirectory(Path.GetDirectoryName(ambiguousPending)!);
+            File.WriteAllText(ambiguousPending, System.Text.Json.JsonSerializer.Serialize(new { FormatVersion = 1,
+                ManifestIds = Enumerable.Range(1, 8).Select(i => i.ToString()).ToArray() }));
+            Check(Wait((Task<bool>)Call(form, "RestoreBackupFilesAsync", ambiguousBackup, ambiguousGame)!),
+                "Ambiguous restored version caused a worker-thread UI exception.");
+            Check(File.ReadAllText(Path.Combine(ambiguousGame, "DOOMEternalx64vk.exe")) == "original" && !File.Exists(ambiguousPending),
+                "Ambiguous restored version retained interrupted state or wrong bytes.");
+            Check(!Field<bool>(form, "_isRunning") && !Field<bool>(form, "_isRestoringBackup"), "Ambiguous restore left UI locked.");
+            Check(Field<RichTextBox>(form, "_consoleBox").Text.Contains(MainForm.T(Field<UserSettings>(form, "_userSettings").Language, "AmbiguousBuild")),
+                "Ambiguous restore warning was not logged on the UI thread.");
+        }
+        finally { versions.Clear(); foreach (object version in originalVersions) versions.Add(version); }
+
         int previewIndex = Array.IndexOf(args, "--preview-dir");
         foreach (string language in new[] { "en", "ru", "es" })
         {
