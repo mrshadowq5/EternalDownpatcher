@@ -8,6 +8,7 @@ internal static class PatchBackup
 {
     internal const string ManifestName = "eternaldownpatcher-backup.json";
 
+    internal sealed record RestoreProgress(int CompletedFiles, int TotalFiles, string? CurrentFile);
     internal sealed record Entry(string Path, bool Existed);
     internal sealed record Manifest(int FormatVersion, Entry[] Files, string[] CreatedDirectories);
 
@@ -89,7 +90,10 @@ internal static class PatchBackup
         }
     }
 
-    public static bool Restore(string backup, string target)
+    internal static Task<bool> RestoreAsync(string backup, string target, IProgress<RestoreProgress>? progress = null)
+        => Task.Run(() => Restore(backup, target, progress is null ? null : progress.Report));
+
+    public static bool Restore(string backup, string target, Action<RestoreProgress>? progress = null)
     {
         PathSafety.RejectLinks(backup);
         PathSafety.RejectLinks(target);
@@ -101,7 +105,7 @@ internal static class PatchBackup
             PathSafety.RejectLinks(manifestPath);
             Manifest manifest = JsonSerializer.Deserialize<Manifest>(File.ReadAllText(manifestPath))
                 ?? throw new InvalidOperationException("Invalid backup manifest.");
-            RestoreManifest(backup, target, manifest);
+            RestoreManifest(backup, target, manifest, progress);
             return true;
         }
 
@@ -111,12 +115,18 @@ internal static class PatchBackup
             throw new InvalidOperationException("The backup contains no files.");
         foreach (string file in legacyFiles)
             PathSafety.Resolve(target, file);
-        foreach (string file in legacyFiles)
+        progress?.Invoke(new(0, legacyFiles.Length, null));
+        for (int index = 0; index < legacyFiles.Length; index++)
+        {
+            string file = legacyFiles[index];
+            progress?.Invoke(new(index, legacyFiles.Length, file));
             CopyFile(PathSafety.Resolve(backup, file), PathSafety.Resolve(target, file));
+            progress?.Invoke(new(index + 1, legacyFiles.Length, null));
+        }
         return false;
     }
 
-    private static void RestoreManifest(string backup, string target, Manifest manifest)
+    private static void RestoreManifest(string backup, string target, Manifest manifest, Action<RestoreProgress>? progress = null)
     {
         if (manifest.FormatVersion != 1 || manifest.Files is null || manifest.CreatedDirectories is null)
             throw new InvalidOperationException("Unsupported or incomplete backup manifest.");
@@ -137,13 +147,17 @@ internal static class PatchBackup
             if (PathSafety.Contains(backup, destination))
                 throw new InvalidOperationException("The backup cannot be a restore destination.");
         }
+        int completed = 0;
+        progress?.Invoke(new(completed, manifest.Files.Length, null));
         foreach (Entry file in manifest.Files.Reverse())
         {
+            progress?.Invoke(new(completed, manifest.Files.Length, file.Path));
             string destination = PathSafety.Resolve(target, file.Path);
             if (file.Existed)
                 CopyFile(PathSafety.Resolve(originals, file.Path), destination);
             else if (File.Exists(destination))
                 File.Delete(destination);
+            progress?.Invoke(new(++completed, manifest.Files.Length, null));
         }
         foreach (string directory in manifest.CreatedDirectories.OrderByDescending(path => path.Length))
         {

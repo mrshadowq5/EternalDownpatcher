@@ -116,6 +116,10 @@ public sealed partial class MainForm : Form
         _consoleBox.Font = new Font("Consolas", 9.5F);
         _consoleBox.BorderStyle = BorderStyle.FixedSingle;
         _consoleBox.ScrollBars = RichTextBoxScrollBars.Vertical;
+        _restoreProgressBar.SetBounds(12, 421, 318, 24);
+        _restoreProgressBar.Style = ProgressBarStyle.Marquee;
+        _restoreProgressBar.MarqueeAnimationSpeed = 30;
+        _restoreProgressBar.Visible = false;
         _restoreBackupButton.SetBounds(345, 421, 145, 24);
         _restoreBackupButton.Text = "Restore Backup";
         _restoreBackupButton.Click += RestoreBackupButton_Click;
@@ -145,6 +149,7 @@ public sealed partial class MainForm : Form
         Controls.Add(_consoleLabel);
         Controls.Add(_copyLogButton);
         Controls.Add(_consoleBox);
+        Controls.Add(_restoreProgressBar);
         Controls.Add(_restoreBackupButton);
         Controls.Add(_openOutputFolderButton);
 
@@ -458,7 +463,8 @@ public sealed partial class MainForm : Form
 
     private void ApplyStatusLabelColors(ThemePalette palette)
     {
-        _gameFolderStatusLabel.ForeColor = IsPositiveStatus(_gameFolderStatusLabel.Text) ? palette.SuccessColor : palette.ErrorColor;
+        _gameFolderStatusLabel.ForeColor = _isRestoringBackup ? palette.TextColor :
+            IsPositiveStatus(_gameFolderStatusLabel.Text) ? palette.SuccessColor : palette.ErrorColor;
         _requiredFieldsLabel.ForeColor = IsPositiveStatus(_requiredFieldsLabel.Text) ? palette.SuccessColor : palette.ErrorColor;
     }
 
@@ -716,6 +722,11 @@ public sealed partial class MainForm : Form
             ["DetectVersionFailed"] = "Unable to detect installed DOOM Eternal version from DOOMEternalx64vk.exe size.",
             ["UnknownVersionRecovery"] = "This installation is not recognized. EXE size: {0} bytes. Latest supported source version: {1}.\n\nSelective downpatching cannot continue with this installation. You can download a complete older version to a separate folder. Your installed game will stay unchanged.\n\nSwitch to Download All Files?",
             ["BackupRestored"] = "Backup restored successfully.",
+            ["RestorePreparing"] = "Preparing backup restoration...",
+            ["RestoreProgress"] = "Restoring backup: {0}/{1} files",
+            ["RestoreCurrentFile"] = "Restoring: {0}",
+            ["RestoreCheckingVersion"] = "Files restored; checking the installed version...",
+            ["WaitForRestore"] = "Backup restoration is still running. Wait for it to finish before closing the application.",
             ["WaitBeforeClosing"] = "Please wait for preparation or cancellation and restoration to finish, then close the application.",
             ["LegacyBackupWarning"] = "This is an older backup. Original files were restored, but files added by the old patcher cannot be identified or removed automatically.",
             ["DepotFailed"] = "DepotDownloader failed. Exit code: {0}",
@@ -843,6 +854,11 @@ public sealed partial class MainForm : Form
             ["DetectVersionFailed"] = "Не удалось определить установленную версию DOOM Eternal по размеру DOOMEternalx64vk.exe.",
             ["UnknownVersionRecovery"] = "Установленная версия не распознана. Размер EXE: {0} байт. Последняя поддерживаемая исходная версия: {1}.\n\nВыборочный откат этой установки недоступен. Можно скачать полную старую версию в отдельную папку. Установленная игра останется без изменений.\n\nПереключиться в режим «Скачать все файлы»?",
             ["BackupRestored"] = "Бэкап успешно восстановлен.",
+            ["RestorePreparing"] = "Подготовка восстановления бэкапа...",
+            ["RestoreProgress"] = "Восстановление бэкапа: {0}/{1} файлов",
+            ["RestoreCurrentFile"] = "Восстанавливается: {0}",
+            ["RestoreCheckingVersion"] = "Файлы восстановлены, проверяется версия игры...",
+            ["WaitForRestore"] = "Восстановление бэкапа ещё идёт. Дождитесь его завершения перед закрытием программы.",
             ["WaitBeforeClosing"] = "Дождитесь завершения подготовки или отмены и восстановления файлов, затем закройте приложение.",
             ["LegacyBackupWarning"] = "Это старый бэкап. Исходные файлы восстановлены, но определить и удалить файлы, добавленные старой версией патчера, автоматически невозможно.",
             ["DepotFailed"] = "DepotDownloader завершился с ошибкой. Код выхода: {0}",
@@ -970,6 +986,11 @@ public sealed partial class MainForm : Form
             ["DetectVersionFailed"] = "No se pudo detectar la versión instalada de DOOM Eternal por el tamaño de DOOMEternalx64vk.exe.",
             ["UnknownVersionRecovery"] = "No se reconoce esta instalación. Tamaño del EXE: {0} bytes. Última versión de origen compatible: {1}.\n\nNo se puede aplicar un parche selectivo. Puede descargar una versión antigua completa en otra carpeta. La instalación actual no cambiará.\n\n¿Activar Descargar todos los archivos?",
             ["BackupRestored"] = "Copia de seguridad restaurada correctamente.",
+            ["RestorePreparing"] = "Preparando la restauración...",
+            ["RestoreProgress"] = "Restaurando copia: {0}/{1} archivos",
+            ["RestoreCurrentFile"] = "Restaurando: {0}",
+            ["RestoreCheckingVersion"] = "Archivos restaurados; comprobando la versión...",
+            ["WaitForRestore"] = "La restauración sigue en curso. Espere a que termine antes de cerrar la aplicación.",
             ["WaitBeforeClosing"] = "Espere a que termine la preparación o la cancelación y restauración antes de cerrar la aplicación.",
             ["LegacyBackupWarning"] = "Esta copia es antigua. Se restauraron los archivos originales, pero no se pueden identificar ni eliminar automáticamente los archivos añadidos por el parcheador antiguo.",
             ["DepotFailed"] = "DepotDownloader falló. Código de salida: {0}",

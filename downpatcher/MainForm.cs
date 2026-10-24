@@ -52,6 +52,8 @@ public sealed partial class MainForm : Form
     private readonly Label _folderLabel = new();
     private readonly Button _openOutputFolderButton = new();
     private readonly Button _restoreBackupButton = new();
+    private readonly ProgressBar _restoreProgressBar = new();
+    private bool _isRestoringBackup;
     private readonly System.Windows.Forms.Timer _themeTransitionTimer = new();
     private bool _isDarkTheme;
     private bool _targetDarkTheme;
@@ -120,8 +122,13 @@ public sealed partial class MainForm : Form
         if (_isRunning)
         {
             e.Cancel = true;
-            _operationCancellation?.Cancel();
-            WriteLog(L("WaitBeforeClosing"));
+            if (_isRestoringBackup)
+                WriteLog(L("WaitForRestore"));
+            else
+            {
+                _operationCancellation?.Cancel();
+                WriteLog(L("WaitBeforeClosing"));
+            }
         }
 
         base.OnFormClosing(e);

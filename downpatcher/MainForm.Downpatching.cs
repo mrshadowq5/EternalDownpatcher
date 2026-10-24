@@ -20,7 +20,7 @@ public sealed partial class MainForm : Form
 {
     #region Download and patch workflow
 
-    private void RestoreBackupButton_Click(object? sender, EventArgs e)
+    private async void RestoreBackupButton_Click(object? sender, EventArgs e)
     {
         if (_isRunning)
         {
@@ -76,22 +76,60 @@ public sealed partial class MainForm : Form
 
         try
         {
-            WriteLog($"Restoring backup: {backupFolder}");
-            WriteLog($"Restore target: {targetFolder}");
-            bool completeBackup = PatchBackup.Restore(backupFolder, targetFolder);
+            bool completeBackup = await RestoreBackupFilesAsync(backupFolder, targetFolder);
             if (!completeBackup)
                 WriteLog(L("LegacyBackupWarning"));
-            GameDownloadOperation.ClearPending(targetFolder);
-            _doomRootFolder = targetFolder;
-            _installedVersion = DetectInstalledVersion(targetFolder);
-            RefreshDownpatchVersions();
-            ApplyLanguage();
             WriteLog("Backup restored successfully.");
             MessageBox.Show(this, completeBackup ? L("BackupRestored") : L("BackupRestored") + "\n\n" + L("LegacyBackupWarning"), "EternalDownpatcher", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception exception)
         {
             ShowErrorKey("RestoreBackupFailed", exception.Message);
+        }
+    }
+
+    private async Task<bool> RestoreBackupFilesAsync(string backupFolder, string targetFolder)
+    {
+        if (_isRunning)
+            throw new InvalidOperationException("Another operation is already running.");
+
+        _versionDataCancellation?.Cancel();
+        // Create the UI handle before worker-thread diagnostics marshal back here.
+        _ = Handle;
+        _isRestoringBackup = true;
+        _doomRootFolder = targetFolder;
+        _installedVersion = null;
+        _installedExecutableSize = null;
+        SetRunningState(true);
+        _restoreProgressBar.Visible = true;
+        _gameFolderStatusLabel.Text = L("RestorePreparing");
+        ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
+        WriteLog($"Restoring backup: {backupFolder}");
+        WriteLog($"Restore target: {targetFolder}");
+        bool reportFiles = true;
+        var progress = new Progress<PatchBackup.RestoreProgress>(update =>
+        {
+            if (!reportFiles || !_isRestoringBackup || IsDisposed || Disposing) return;
+            _gameFolderStatusLabel.Text = LF("RestoreProgress", update.CompletedFiles, update.TotalFiles);
+            if (update.CurrentFile is not null) WriteLog(LF("RestoreCurrentFile", update.CurrentFile));
+        });
+        try
+        {
+            bool complete = await PatchBackup.RestoreAsync(backupFolder, targetFolder, progress);
+            _gameFolderStatusLabel.Text = L("RestoreCheckingVersion");
+            // Queued progress from file copying must not overwrite the verification stage.
+            reportFiles = false;
+            _installedVersion = await Task.Run(() => DetectInstalledVersion(targetFolder));
+            GameDownloadOperation.ClearPending(targetFolder);
+            return complete;
+        }
+        finally
+        {
+            _isRestoringBackup = false;
+            _restoreProgressBar.Visible = false;
+            RefreshDownpatchVersions();
+            ApplyLanguage();
+            SetRunningState(false);
         }
     }
 
@@ -557,7 +595,7 @@ public sealed partial class MainForm : Form
     {
         _isRunning = isRunning;
         _startButton.Enabled = !isRunning && _versions.Count > 0;
-        _cancelButton.Enabled = isRunning;
+        _cancelButton.Enabled = isRunning && !_isRestoringBackup;
         _selectGameFolderButton.Enabled = !isRunning && !_downloadAllFilesRadioButton.Checked;
         _selectDownpatchFolderButton.Enabled = !isRunning;
         _versionComboBox.Enabled = !isRunning;
@@ -978,9 +1016,9 @@ public sealed partial class MainForm : Form
 
         long exeSize = new FileInfo(exePath).Length;
         _installedExecutableSize = exeSize;
-        WriteLog($"DOOM Eternal executable: {exePath}");
-        WriteLog($"Executable size: {exeSize} bytes");
-        WriteLog($"Versions source: {FindVersionsJsonPath() ?? "not found"}");
+        WriteLogThreadSafe($"DOOM Eternal executable: {exePath}");
+        WriteLogThreadSafe($"Executable size: {exeSize} bytes");
+        WriteLogThreadSafe($"Versions source: {FindVersionsJsonPath() ?? "not found"}");
         DownpatchVersion[] candidates = _versions.Where(version =>
             long.TryParse(version.Size, out long size) && size == exeSize).ToArray();
         if (candidates.Length <= 1)
