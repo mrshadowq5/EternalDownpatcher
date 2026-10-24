@@ -279,7 +279,7 @@ public sealed partial class MainForm : Form
             WriteLog("Output folder cleared.");
         }
 
-        DialogResult result = MessageBox.Show(this, downloadAllFiles ? "This will download a full standalone copy of the selected DOOM Eternal version.\n\nIt will not modify your selected Steam install.\n\nContinue?" : "This will download downpatch files using DepotDownloader and then apply them to the selected DOOM Eternal root folder.\n\nExisting replaced files will be backed up first.\n\nContinue?", downloadAllFiles ? "Download all files" : "Start downpatch", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+        DialogResult result = MessageBox.Show(this, downloadAllFiles ? "This will download a full standalone copy of the selected DOOM Eternal version.\n\nIt will not modify your selected Steam install.\n\nContinue?" : RequiresCompleteFileList(selectedVersion) ? L("CompleteTargetDownloadWarning") + "\n\n" + "This will apply the downloaded files to the selected installation and back up existing replaced files.\n\nContinue?" : "This will download downpatch files using DepotDownloader and then apply them to the selected DOOM Eternal root folder.\n\nExisting replaced files will be backed up first.\n\nContinue?", downloadAllFiles ? "Download all files" : "Start downpatch", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
         if (result != DialogResult.Yes)
         {
             WriteLog("Operation cancelled before download.");
@@ -326,6 +326,7 @@ public sealed partial class MainForm : Form
 
             if (!long.TryParse(selectedVersion.Size, out long expectedSize) || new FileInfo(downloadedExe).Length != expectedSize)
                 throw new InvalidOperationException(L("DownloadedExecutableMismatch"));
+            await Task.Run(() => SaveVersionReceipt(outputFolder, selectedVersion, _operationCancellation.Token), _operationCancellation.Token);
             WriteLog("Download completed.");
             if (downloadAllFiles)
             {
@@ -517,7 +518,7 @@ public sealed partial class MainForm : Form
     private void LoadVersions()
     {
         string? cachedFolder = VersionDataCache.FindCurrentFolder(VersionDataCache.CacheRoot);
-        string[] folders = [cachedFolder ?? "", Path.Combine(GetAppWorkingFolder(), "data"), Path.Combine(AppContext.BaseDirectory, "data")];
+        string[] folders = [Path.Combine(GetAppWorkingFolder(), "data"), Path.Combine(AppContext.BaseDirectory, "data"), cachedFolder ?? ""];
         foreach (string folder in folders.Where(folder => !string.IsNullOrEmpty(folder)).Distinct(StringComparer.OrdinalIgnoreCase))
         {
             if (!File.Exists(Path.Combine(folder, "versions.json")))
@@ -525,7 +526,6 @@ public sealed partial class MainForm : Form
             try
             {
                 ApplyVersionData(folder);
-                return;
             }
             catch (Exception exception)
             {
@@ -533,15 +533,25 @@ public sealed partial class MainForm : Form
             }
         }
 
+        if (_versions.Count > 0) return;
+
         // The startup update can recover even if the bundled data folder is missing.
         _startButton.Enabled = false;
         WriteLog(L("VersionsJsonNotFound"));
     }
 
-    private void ApplyVersionData(string folder)
+    private bool ApplyVersionData(string folder)
     {
         string path = Path.Combine(folder, "versions.json");
         List<DownpatchVersion> versions = ReadVersionsJson(path);
+        // Several public builds share one EXE. Preserve every known depot snapshot,
+        // while allowing a catalog to rename a build without losing coverage.
+        HashSet<string> incomingSnapshots = versions.Select(version => string.Join(",", version.ManifestIds)).ToHashSet(StringComparer.Ordinal);
+        if (_versions.Any(version => !incomingSnapshots.Contains(string.Join(",", version.ManifestIds))))
+        {
+            WriteLog(L("VersionDataOlder"));
+            return false;
+        }
         _versionDataFolder = Path.GetFullPath(folder);
         _versions.Clear();
         _versions.AddRange(versions);
@@ -552,6 +562,7 @@ public sealed partial class MainForm : Form
         _startButton.Enabled = !_isRunning && _versions.Count > 0;
         WriteLog(LF("LoadedVersionsLog", _versions.Count));
         WriteLog(LF("VersionsSourceLog", path));
+        return true;
     }
 
     private async Task UpdateVersionDataAsync(Func<CancellationToken, Task<string>>? refreshVersionData = null)
@@ -567,8 +578,8 @@ public sealed partial class MainForm : Form
             // Cancellation can race with a completed download queued on the UI thread.
             if (cancellation.IsCancellationRequested || _isRunning || IsDisposed || Disposing)
                 return;
-            ApplyVersionData(folder);
-            WriteLog(L("VersionDataReady"));
+            if (ApplyVersionData(folder))
+                WriteLog(L("VersionDataReady"));
         }
         catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
@@ -679,7 +690,28 @@ public sealed partial class MainForm : Form
             }
 
             string size = GetStringProperty(element, "size") ?? "";
-            versions.Add(new DownpatchVersion(name.Trim(), size.Trim(), manifestIds.ToArray()));
+            DetectionFile[] detectionFiles = [];
+            if (element.TryGetProperty("detectionFiles", out JsonElement detection))
+            {
+                if (detection.ValueKind != JsonValueKind.Array || detection.GetArrayLength() > 8)
+                    throw new InvalidDataException("Invalid build detection files.");
+                detectionFiles = detection.EnumerateArray().Select(file => new DetectionFile(
+                    GetStringProperty(file, "path") ?? "", GetStringProperty(file, "size") ?? "",
+                    GetStringProperty(file, "sha1") ?? "")).ToArray();
+                foreach (DetectionFile file in detectionFiles)
+                {
+                    ValidateFileListPath(file.Path);
+                    if (!long.TryParse(file.Size, out long fileSize) || fileSize <= 0 ||
+                        !Regex.IsMatch(file.Sha1, @"\A[0-9a-fA-F]{40}\z"))
+                        throw new InvalidDataException("Invalid build detection fingerprint.");
+                }
+            }
+            string? buildId = GetStringProperty(element, "buildId");
+            if (buildId is not null && (!ulong.TryParse(buildId, out ulong build) || build == 0))
+                throw new InvalidDataException("Invalid Steam build ID.");
+            versions.Add(new DownpatchVersion(name.Trim(), size.Trim(), manifestIds.ToArray(),
+                element.TryGetProperty("requiresCompleteFileList", out JsonElement completeFileList) &&
+                completeFileList.ValueKind == JsonValueKind.True, buildId, detectionFiles));
         }
 
         if (versions.Count == 0)
@@ -694,7 +726,7 @@ public sealed partial class MainForm : Form
                 throw new InvalidDataException("versions.json contains incomplete version entries.");
             foreach (DownpatchVersion version in versions)
             {
-                if (!Regex.IsMatch(version.Name, @"\A[0-9]+(?:\.[0-9]+)*\z") || !names.Add(version.Name) ||
+                if (!Regex.IsMatch(version.Name, @"\A(?:[0-9]+(?:\.[0-9]+)*|Build [0-9]+)\z") || !names.Add(version.Name) ||
                     !long.TryParse(version.Size, out long size) || size <= 0 ||
                     version.ManifestIds.Any(id => !ulong.TryParse(id, out ulong value) || value == 0))
                     throw new InvalidDataException($"Invalid version metadata: {version.Name}");
@@ -710,7 +742,7 @@ public sealed partial class MainForm : Form
         if (!File.Exists(jsonPath) || new FileInfo(jsonPath).Length > 1024 * 1024)
             throw new InvalidDataException("Missing or oversized versions.json.");
         List<DownpatchVersion> versions = ReadVersionsJson(jsonPath, strict: true);
-        IEnumerable<string> requiredLists = versions.Skip(1).Select(version => version.Name);
+        IEnumerable<string> requiredLists = versions.Skip(1).Where(version => !version.RequiresCompleteFileList).Select(version => version.Name);
         // 1.0 uses this additional list; there is deliberately no 1.0.txt.
         if (versions.Any(version => version.Name == "1.0"))
             requiredLists = requiredLists.Append("1.1.0");
@@ -806,20 +838,101 @@ public sealed partial class MainForm : Form
         WriteLog($"DOOM Eternal executable: {exePath}");
         WriteLog($"Executable size: {exeSize} bytes");
         WriteLog($"Versions source: {FindVersionsJsonPath() ?? "not found"}");
-        foreach (DownpatchVersion version in _versions)
+        DownpatchVersion[] candidates = _versions.Where(version =>
+            long.TryParse(version.Size, out long size) && size == exeSize).ToArray();
+        if (candidates.Length <= 1)
+            return candidates.SingleOrDefault();
+
+        // A receipt is written only after a successful Steam download. Its recorded
+        // files must still match, so a stale receipt cannot identify a changed copy.
+        DownpatchVersion? receiptVersion = DetectReceiptVersion(doomRootFolder, candidates);
+        if (receiptVersion is not null) return receiptVersion;
+        Dictionary<string, string?> hashes = new(StringComparer.OrdinalIgnoreCase);
+        string? FileHash(string relative)
         {
-            if (!long.TryParse(version.Size.Trim(), out long versionSize))
+            if (hashes.TryGetValue(relative, out string? cached)) return cached;
+            try
             {
-                continue;
+                using FileStream file = File.OpenRead(PathSafety.Resolve(doomRootFolder, relative));
+                return hashes[relative] = Convert.ToHexString(SHA1.HashData(file));
             }
-
-            if (versionSize == exeSize)
-            {
-                return version;
-            }
+            catch (IOException) { return hashes[relative] = null; }
+            catch (UnauthorizedAccessException) { return hashes[relative] = null; }
         }
-
+        DownpatchVersion[] matches = candidates.Where(version => version.DetectionFiles is { Length: > 0 } &&
+            version.DetectionFiles.All(file => string.Equals(FileHash(file.Path), file.Sha1, StringComparison.OrdinalIgnoreCase))).ToArray();
+        if (matches.Length == 1) return matches[0];
+        DownpatchVersion? steamVersion = DetectSteamSnapshot(doomRootFolder, candidates.Where(version => version.DetectionFiles is not { Length: > 0 }).ToArray());
+        if (steamVersion is not null) return steamVersion;
+        WriteLog(L("AmbiguousBuild"));
         return null;
+    }
+
+    private static readonly string[] ReceiptPaths = ["DOOMEternalx64vk.exe", "launcher/idTechLauncher.exe", "launcher/resources/app.asar"];
+    private const string VersionReceiptName = "eternaldownpatcher-version.json";
+
+    private static DownpatchVersion? DetectReceiptVersion(string folder, DownpatchVersion[] candidates)
+    {
+        try
+        {
+            string path = PathSafety.Resolve(folder, VersionReceiptName);
+            if (!File.Exists(path) || new FileInfo(path).Length > 16 * 1024) return null;
+            VersionReceipt? receipt = JsonSerializer.Deserialize<VersionReceipt>(File.ReadAllText(path));
+            if (receipt is not { FormatVersion: 1, Files.Length: 3, ManifestIds.Length: 8 } ||
+                receipt.Files.Any(file => file is null) || !receipt.Files.Select(file => file.Path).SequenceEqual(ReceiptPaths)) return null;
+            DownpatchVersion? version = candidates.FirstOrDefault(candidate => candidate.ManifestIds.SequenceEqual(receipt.ManifestIds));
+            if (version is null) return null;
+            foreach (ReceiptFile file in receipt.Files)
+            {
+                string filePath = PathSafety.Resolve(folder, file.Path);
+                if (!File.Exists(filePath) || new FileInfo(filePath).Length != file.Size) return null;
+                using FileStream input = File.OpenRead(filePath);
+                if (!string.Equals(Convert.ToHexString(SHA256.HashData(input)), file.Sha256, StringComparison.OrdinalIgnoreCase)) return null;
+            }
+            return version;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException)
+        { return null; }
+    }
+
+    private static void SaveVersionReceipt(string folder, DownpatchVersion version, CancellationToken cancellationToken)
+    {
+        if (version.BuildId is null) return;
+        ReceiptFile[] files = ReceiptPaths.Select(relative =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            string path = PathSafety.Resolve(folder, relative);
+            using FileStream input = File.OpenRead(path);
+            return new ReceiptFile(relative, input.Length, Convert.ToHexString(SHA256.HashData(input)));
+        }).ToArray();
+        cancellationToken.ThrowIfCancellationRequested();
+        File.WriteAllText(PathSafety.Resolve(folder, VersionReceiptName),
+            JsonSerializer.Serialize(new VersionReceipt(1, version.ManifestIds, files)));
+    }
+
+    private static DownpatchVersion? DetectSteamSnapshot(string folder, DownpatchVersion[] candidates)
+    {
+        try
+        {
+            DirectoryInfo? common = Directory.GetParent(Path.GetFullPath(folder));
+            if (common is null || !common.Name.Equals("common", StringComparison.OrdinalIgnoreCase) || common.Parent is null) return null;
+            string path = PathSafety.Resolve(common.Parent.FullName, "appmanifest_782330.acf");
+            if (!File.Exists(path) || new FileInfo(path).Length > 1024 * 1024) return null;
+            string text = File.ReadAllText(path);
+            string installDir = Regex.Match(text, "\"installdir\"\\s+\"([^\"]+)\"").Groups[1].Value;
+            if (!string.Equals(installDir, Path.GetFileName(Path.TrimEndingDirectorySeparator(folder)), StringComparison.OrdinalIgnoreCase)) return null;
+            // Read only the InstalledDepots block, never shared, staged or download depots.
+            Match installed = Regex.Match(text, "\"InstalledDepots\"\\s*\\{(?<body>(?:[^{}]|\\{[^{}]*\\})*)\\}");
+            if (!installed.Success) return null;
+            Dictionary<string, string> manifests = Regex.Matches(installed.Groups["body"].Value,
+                "\"(?<depot>[0-9]+)\"\\s*\\{[^{}]*?\"manifest\"\\s*\"(?<manifest>[0-9]+)\"[^{}]*\\}")
+                .ToDictionary(match => match.Groups["depot"].Value, match => match.Groups["manifest"].Value);
+            DownpatchVersion[] matches = candidates.Where(version => DepotIds.Select((depot, i) =>
+                manifests.TryGetValue(depot.ToString(), out string? manifest) && manifest == version.ManifestIds[i]).All(match => match)).ToArray();
+            return matches.Length == 1 ? matches[0] : null;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or ArgumentException)
+        { return null; }
     }
 
     private void OfferFullDownloadForUnknownVersion()
@@ -852,6 +965,14 @@ public sealed partial class MainForm : Form
         if (targetIndex >= installedIndex)
         {
             throw new InvalidOperationException(L("TargetMustBeOlder"));
+        }
+
+        if (RequiresCompleteFileList(targetVersion))
+        {
+            string completePath = Path.Combine(GetAppWorkingFolder(), "filelist.txt");
+            File.WriteAllText(completePath, "regex:.*" + Environment.NewLine);
+            WriteLog(L("CompleteTargetDownloadWarning"));
+            return completePath;
         }
 
         HashSet<string> aggregatedFiles = new(StringComparer.OrdinalIgnoreCase);
@@ -904,6 +1025,15 @@ public sealed partial class MainForm : Form
         WriteLog($"Generated filelist: {generatedFileListPath}");
         WriteLog($"Generated filelist entries: {aggregatedFiles.Count}");
         return generatedFileListPath;
+    }
+
+    private bool RequiresCompleteFileList(DownpatchVersion targetVersion)
+    {
+        if (_installedVersion is null) return false;
+        int target = GetVersionIndex(targetVersion.Name);
+        int installed = GetVersionIndex(_installedVersion.Name);
+        return target >= 0 && installed > target && _versions.Skip(target + 1).Take(installed - target)
+            .Any(version => version.RequiresCompleteFileList);
     }
 
     private static IEnumerable<string> ReadFileListEntries(string fileListPath)
@@ -1008,7 +1138,11 @@ public sealed partial class MainForm : Form
         return _versions.FirstOrDefault(version => string.Equals(version.Name, selectedName, StringComparison.OrdinalIgnoreCase));
     }
 
-    private sealed record DownpatchVersion(string Name, string Size, string[] ManifestIds);
+    private sealed record DetectionFile(string Path, string Size, string Sha1);
+    private sealed record ReceiptFile(string Path, long Size, string Sha256);
+    private sealed record VersionReceipt(int FormatVersion, string[] ManifestIds, ReceiptFile[] Files);
+    private sealed record DownpatchVersion(string Name, string Size, string[] ManifestIds, bool RequiresCompleteFileList = false,
+        string? BuildId = null, DetectionFile[]? DetectionFiles = null);
 
     #endregion
 
