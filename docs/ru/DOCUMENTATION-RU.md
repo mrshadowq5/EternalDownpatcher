@@ -1,6 +1,6 @@
 # EternalDownpatcher — Руководство пользователя
 
-[English](../DOCUMENTATION.md) · [Русский](DOCUMENTATION.md) · [Español](../es/DOCUMENTATION.md)
+[English](../DOCUMENTATION.md) · [Русский](DOCUMENTATION-RU.md) · [Español](../es/DOCUMENTATION-ES.md)
 
 [EternalDownpatcher](../../README.md) · Steam
 
