@@ -424,7 +424,7 @@ public sealed partial class MainForm : Form
                 EnsureSteamAppIdFile(outputFolder);
                 WriteLog("steam_appid.txt created.");
                 WriteLog("Download All Files completed successfully.");
-                MessageBox.Show(this, "Download All Files completed successfully.\n\nYou can add DOOMEternalx64vk.exe as a Non-Steam Game.", "EternalDownpatcher", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show(this, "Download All Files completed successfully.", "EternalDownpatcher", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             int copiedFiles = completed.AppliedFiles;
