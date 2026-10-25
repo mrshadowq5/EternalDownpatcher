@@ -13,18 +13,14 @@ public sealed class SettingsForm : Form
 
     private readonly Panel _contentPanel = new();
     private readonly Button _languageTabButton = new();
-    private readonly Button _steamTabButton = new();
     private readonly Button _downpatchTabButton = new();
     private readonly Button _infoTabButton = new();
     private readonly ComboBox _languageComboBox = new();
-    private readonly CheckBox _rememberLoginCheckBox = new();
-    private readonly CheckBox _rememberPasswordCheckBox = new();
     private readonly CheckBox _createBackupCheckBox = new();
     private readonly Button _okButton = new();
     private readonly Button _cancelButton = new();
 
     private readonly bool _darkMode;
-    private readonly Func<string, string, bool> _confirmPasswordSaving;
     private string _currentPage = "language";
 
     private Color _back;
@@ -37,23 +33,12 @@ public sealed class SettingsForm : Form
     private Color _link;
 
     public string SelectedLanguage { get; private set; }
-    public bool RememberLogin { get; private set; }
-    public bool RememberPassword { get; private set; }
     public bool CreateBackup { get; private set; }
 
-    public SettingsForm(UserSettings settings) : this(settings, null)
-    {
-    }
-
-    internal SettingsForm(UserSettings settings, Func<string, string, bool>? confirmPasswordSaving)
+    public SettingsForm(UserSettings settings)
     {
         _darkMode = settings.DarkMode;
-        RememberLogin = settings.RememberLogin;
-        RememberPassword = settings.RememberPassword;
         CreateBackup = settings.CreateBackup;
-        _confirmPasswordSaving = confirmPasswordSaving ?? ((message, title) =>
-            MessageBox.Show(this, message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
-                MessageBoxDefaultButton.Button2) == DialogResult.Yes);
         SelectedLanguage = string.IsNullOrWhiteSpace(settings.Language)
             ? "en"
             : settings.Language;
@@ -106,39 +91,28 @@ public sealed class SettingsForm : Form
         _languageTabButton.SetBounds(10, 8, 95, 28);
         _languageTabButton.Click += (_, _) => ShowLanguagePage();
 
-        _steamTabButton.SetBounds(108, 8, 95, 28);
-        _steamTabButton.Click += (_, _) => ShowSteamPage();
-        _downpatchTabButton.SetBounds(206, 8, 104, 28);
+        _downpatchTabButton.SetBounds(108, 8, 104, 28);
         _downpatchTabButton.Click += (_, _) => ShowDownpatchPage();
-        _infoTabButton.SetBounds(313, 8, 70, 28);
+        _infoTabButton.SetBounds(215, 8, 70, 28);
         _infoTabButton.Click += (_, _) => ShowInfoPage();
 
         StyleButton(_languageTabButton, false);
-        StyleButton(_steamTabButton, false);
         StyleButton(_downpatchTabButton, false);
         StyleButton(_infoTabButton, false);
 
         topPanel.Controls.Add(_languageTabButton);
-        topPanel.Controls.Add(_steamTabButton);
         topPanel.Controls.Add(_downpatchTabButton);
         topPanel.Controls.Add(_infoTabButton);
 
-        foreach (CheckBox checkBox in new[] { _rememberLoginCheckBox, _rememberPasswordCheckBox, _createBackupCheckBox })
-        {
-            checkBox.BackColor = _panel;
-            checkBox.ForeColor = _text;
-            checkBox.Font = new Font(Font, FontStyle.Bold);
-            checkBox.FlatStyle = FlatStyle.Flat;
-            checkBox.Cursor = Cursors.Hand;
-            checkBox.Paint += (_, e) => MainForm.PaintCheckBox(checkBox, e.Graphics, prominent: true);
-        }
-        // Restore saved choices before subscribing, so opening Settings never prompts.
-        _rememberLoginCheckBox.Checked = RememberLogin;
-        _rememberPasswordCheckBox.Checked = RememberPassword;
+        _createBackupCheckBox.BackColor = _panel;
+        _createBackupCheckBox.ForeColor = _text;
+        _createBackupCheckBox.Font = new Font(Font, FontStyle.Bold);
+        _createBackupCheckBox.FlatStyle = FlatStyle.Flat;
+        _createBackupCheckBox.Cursor = Cursors.Hand;
+        _createBackupCheckBox.Paint += (_, e) => MainForm.PaintCheckBox(_createBackupCheckBox, e.Graphics, prominent: true);
+        // Set the saved choice before subscribing to changes.
         _createBackupCheckBox.Checked = CreateBackup;
         _createBackupCheckBox.CheckedChanged += (_, _) => CreateBackup = _createBackupCheckBox.Checked;
-        _rememberLoginCheckBox.CheckedChanged += (_, _) => RememberLogin = _rememberLoginCheckBox.Checked;
-        _rememberPasswordCheckBox.CheckedChanged += RememberPasswordCheckBox_CheckedChanged;
 
         Panel bottomPanel = new()
         {
@@ -189,7 +163,6 @@ public sealed class SettingsForm : Form
         ClearContentPage();
 
         StyleButton(_languageTabButton, true);
-        StyleButton(_steamTabButton, false);
         StyleButton(_downpatchTabButton, false);
         StyleButton(_infoTabButton, false);
 
@@ -248,46 +221,11 @@ public sealed class SettingsForm : Form
         _contentPanel.Controls.Add(noteLabel);
     }
 
-    private void ShowSteamPage()
-    {
-        _currentPage = "steam";
-        ClearContentPage();
-        StyleButton(_languageTabButton, false);
-        StyleButton(_steamTabButton, true);
-        StyleButton(_downpatchTabButton, false);
-        StyleButton(_infoTabButton, false);
-
-        Label heading = new()
-        {
-            Text = T("SteamSignIn"),
-            ForeColor = _text,
-            BackColor = _panel,
-            Font = new Font(Font, FontStyle.Bold)
-        };
-        heading.SetBounds(20, 18, 400, 24);
-        _rememberLoginCheckBox.Text = T("RememberLogin");
-        _rememberLoginCheckBox.SetBounds(20, 54, 400, 34);
-        _rememberPasswordCheckBox.Text = T("RememberPassword");
-        _rememberPasswordCheckBox.SetBounds(20, 94, 400, 34);
-        Label note = new()
-        {
-            Text = T("RememberSteamNote"),
-            ForeColor = _text,
-            BackColor = _panel
-        };
-        note.SetBounds(20, 146, 400, 60);
-        _contentPanel.Controls.Add(heading);
-        _contentPanel.Controls.Add(_rememberLoginCheckBox);
-        _contentPanel.Controls.Add(_rememberPasswordCheckBox);
-        _contentPanel.Controls.Add(note);
-    }
-
     private void ShowDownpatchPage()
     {
         _currentPage = "downpatch";
         ClearContentPage();
         StyleButton(_languageTabButton, false);
-        StyleButton(_steamTabButton, false);
         StyleButton(_downpatchTabButton, true);
         StyleButton(_infoTabButton, false);
 
@@ -313,21 +251,12 @@ public sealed class SettingsForm : Form
         _contentPanel.Controls.Add(note);
     }
 
-    private void RememberPasswordCheckBox_CheckedChanged(object? sender, EventArgs e)
-    {
-        if (_rememberPasswordCheckBox.Checked &&
-            !_confirmPasswordSaving(T("RememberPasswordWarning"), T("RememberPasswordWarningTitle")))
-            _rememberPasswordCheckBox.Checked = false;
-        RememberPassword = _rememberPasswordCheckBox.Checked;
-    }
-
     private void ShowInfoPage()
     {
         _currentPage = "info";
         ClearContentPage();
 
         StyleButton(_languageTabButton, false);
-        StyleButton(_steamTabButton, false);
         StyleButton(_downpatchTabButton, false);
         StyleButton(_infoTabButton, true);
 
@@ -408,10 +337,6 @@ public sealed class SettingsForm : Form
         {
             ShowLanguagePage();
         }
-        else if (_currentPage == "steam")
-        {
-            ShowSteamPage();
-        }
         else if (_currentPage == "downpatch")
         {
             ShowDownpatchPage();
@@ -426,7 +351,6 @@ public sealed class SettingsForm : Form
     {
         Text = T("Settings");
         _languageTabButton.Text = T("Language");
-        _steamTabButton.Text = "Credentials";
         _downpatchTabButton.Text = T("Downpatch");
         _infoTabButton.Text = T("Info");
         _okButton.Text = "OK";
@@ -468,8 +392,6 @@ public sealed class SettingsForm : Form
             ["Info"] = "Info",
             ["Cancel"] = "Cancel",
             ["ApplicationLanguage"] = "Application language",
-            ["SteamSignIn"] = "Steam sign-in",
-            ["RememberSteamNote"] = "Choose what to restore next time. Turn an option off and click OK to remove its saved data.",
             ["DefaultLanguageNote"] = "English is the default language.",
             ["DepotDownloaderVersion"] = "DepotDownloader version 1.2",
             ["HelpText"] = "If you run into a problem or a bug using Downpatcher, request help on MDSR Discord or ping/DM me if needed.",
@@ -487,8 +409,6 @@ public sealed class SettingsForm : Form
             ["Info"] = "Инфо",
             ["Cancel"] = "Отмена",
             ["ApplicationLanguage"] = "Язык приложения",
-            ["SteamSignIn"] = "Вход в Steam",
-            ["RememberSteamNote"] = "Выберите, что подставлять при следующем запуске. Снятие галочки и нажатие OK удалит сохранённые данные.",
             ["DefaultLanguageNote"] = "Английский язык используется по умолчанию.",
             ["DepotDownloaderVersion"] = "Версия DepotDownloader: 1.2",
             ["HelpText"] = "Если у вас возникла проблема или вы столкнулись с багом, напишите в Modern DOOM Speedrunning Discord или пинганите/напишите мне в лс.",
@@ -506,8 +426,6 @@ public sealed class SettingsForm : Form
             ["Info"] = "Info",
             ["Cancel"] = "Cancelar",
             ["ApplicationLanguage"] = "Idioma de la aplicación",
-            ["SteamSignIn"] = "Acceso a Steam",
-            ["RememberSteamNote"] = "Elige qué recordar al iniciar de nuevo. Desactiva una opción y pulsa OK para eliminar sus datos guardados.",
             ["DefaultLanguageNote"] = "El inglés es el idioma predeterminado.",
             ["DepotDownloaderVersion"] = "Versión de DepotDownloader: 1.2",
             ["HelpText"] = "Si tienes un problema con EternalDownpatcher, pide ayuda en el Discord de Modern DOOM Speedrunning)",
@@ -630,8 +548,6 @@ public sealed class SettingsForm : Form
             _contentPanel.Controls.Remove(control);
             // Keep input controls alive while switching between Settings pages.
             if (!ReferenceEquals(control, _languageComboBox) &&
-                !ReferenceEquals(control, _rememberLoginCheckBox) &&
-                !ReferenceEquals(control, _rememberPasswordCheckBox) &&
                 !ReferenceEquals(control, _createBackupCheckBox))
             {
                 control.Dispose();
@@ -645,8 +561,6 @@ public sealed class SettingsForm : Form
         if (disposing)
         {
             _languageComboBox.Dispose();
-            _rememberLoginCheckBox.Dispose();
-            _rememberPasswordCheckBox.Dispose();
             _createBackupCheckBox.Dispose();
             _githubLogo?.Dispose();
             _discordLogo?.Dispose();

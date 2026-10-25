@@ -7,7 +7,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -45,7 +44,7 @@ public sealed partial class MainForm : Form
     private readonly CheckBox _validateFilesCheckBox = new();
     private string? _savedOutputFolder;
     private bool _savedValidateFiles;
-    private readonly Func<UserSettings, bool> _saveCredentialSettings;
+    private readonly Func<UserSettings, bool> _saveSettings;
     private readonly Label _gameFolderStatusLabel = new();
     private readonly Label _requiredFieldsLabel = new();
     private readonly RichTextBox _consoleBox = new();
@@ -74,10 +73,10 @@ public sealed partial class MainForm : Form
     {
     }
 
-    internal MainForm(UserSettings userSettings, Func<UserSettings, bool> saveCredentialSettings)
+    internal MainForm(UserSettings userSettings, Func<UserSettings, bool> saveSettings)
     {
         _userSettings = userSettings;
-        _saveCredentialSettings = saveCredentialSettings;
+        _saveSettings = saveSettings;
         Text = "EternalDownpatcher";
         StartPosition = FormStartPosition.CenterScreen;
         ClientSize = new Size(720, 455);
@@ -92,7 +91,6 @@ public sealed partial class MainForm : Form
         }
 
         BuildInterface();
-        RestoreSteamCredentials();
         ConfigureThemeTransition();
         _isDarkTheme = _userSettings.DarkMode;
         ApplyLanguage();
@@ -201,42 +199,12 @@ public sealed partial class MainForm : Form
     private void WriteLog(string message)
     {
         string timestamp = DateTime.Now.ToString("HH:mm:ss");
-        _consoleBox.AppendText($"[{timestamp}] > {message}{Environment.NewLine}");
+        _consoleBox.Select(_consoleBox.TextLength, 0);
+        _consoleBox.SelectionBackColor = _consoleBox.BackColor;
+        _consoleBox.SelectionColor = _consoleBox.ForeColor;
+        _consoleBox.SelectedText = $"[{timestamp}] > {message}{Environment.NewLine}";
         _consoleBox.SelectionStart = _consoleBox.TextLength;
         _consoleBox.ScrollToCaret();
-    }
-
-    #endregion
-
-    #region Saved credentials
-
-    private void RestoreSteamCredentials()
-    {
-        _steamUsernameTextBox.Text = _userSettings.RememberLogin ? _userSettings.SteamLogin : "";
-        _steamPasswordTextBox.Text = _userSettings.RememberPassword
-            ? SteamPasswordProtection.Decrypt(_userSettings.SteamPassword)
-            : "";
-    }
-
-    private void SaveSteamCredentials()
-    {
-        bool saved;
-        try
-        {
-            SteamCredentialSettings.Capture(_userSettings, _steamUsernameTextBox.Text,
-                _steamPasswordTextBox.Text, _userSettings.RememberLogin, _userSettings.RememberPassword);
-            saved = _saveCredentialSettings(_userSettings);
-        }
-        catch (CryptographicException)
-        {
-            saved = false;
-        }
-
-        if (!saved)
-        {
-            MessageBox.Show(this, L("CredentialSaveFailed"), "EternalDownpatcher",
-                MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        }
     }
 
     #endregion

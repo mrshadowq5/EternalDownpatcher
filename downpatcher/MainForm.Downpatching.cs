@@ -321,10 +321,8 @@ public sealed partial class MainForm : Form
         SetRunningState(true);
         try
         {
-            SaveSteamCredentials();
             WriteLog($"Mode: {(downloadAllFiles ? "Download All Files" : "Patch existing install")}");
             WriteLog($"Selected version: {selectedVersion.Name}");
-            WriteLog($"Steam account: {_steamUsernameTextBox.Text.Trim()}");
             WriteLog($"DepotDownloader: {depotDownloaderPath}");
             if (downloadAllFiles)
             {
@@ -343,7 +341,7 @@ public sealed partial class MainForm : Form
                 SteamManifestCache.FindExistingFolders(doomRootFolder, outputFolder),
                 (requests, cacheFolder, token) => RunDepotDownloaderAsync(depotDownloaderPath,
                     requests.Select(request => request.DepotId).ToArray(), requests.Select(request => request.ManifestId).ToArray(),
-                    null, false, false, username, password, _userSettings.RememberPassword, cacheFolder, token, manifestOnly: true));
+                    null, false, false, username, password, rememberPassword: true, cacheFolder, token, manifestOnly: true));
             ManifestSelection? selection = null;
             _gameFolderStatusLabel.Text = L("ManifestPlanning");
             WriteLog(L("ManifestPlanning"));
@@ -382,7 +380,7 @@ public sealed partial class MainForm : Form
             GameDownloadResult completed = await GameDownloadOperation.ExecuteAsync(plan,
                 (folder, verifyExisting, token) => RunDepotDownloaderAsync(depotDownloaderPath, DepotIds, selectedVersion.ManifestIds,
                     fileListPath, !downloadAllFiles, verifyExisting, _steamUsernameTextBox.Text.Trim(),
-                    _steamPasswordTextBox.Text, _userSettings.RememberPassword, folder, token),
+                    _steamPasswordTextBox.Text, rememberPassword: true, folder, token),
                 async (folder, token) =>
                 {
                     // A successful downloader exit can still omit a depot. Resolve

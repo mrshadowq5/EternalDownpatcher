@@ -6,9 +6,10 @@ internal static class Program
     private static void Main()
     {
         ApplicationConfiguration.Initialize();
-        UserSettings settings = UserSettingsStore.Load();
+        UserSettings settings;
         try
         {
+            settings = UserSettingsStore.Load();
             // The main window is created only after the required downloader is ready.
             if (!DepotDownloaderStartup.Prepare(MainForm.GetAppWorkingFolder(), settings)) return;
         }

@@ -353,6 +353,13 @@ public sealed partial class MainForm : Form
     {
         _isDarkTheme = dark;
         ApplyThemePalette(GetThemePalette(dark), dark);
+        // RichTextBox character backgrounds are separate from the control background.
+        int selectionStart = _consoleBox.SelectionStart;
+        int selectionLength = _consoleBox.SelectionLength;
+        _consoleBox.SelectAll();
+        _consoleBox.SelectionBackColor = _consoleBox.BackColor;
+        _consoleBox.SelectionColor = _consoleBox.ForeColor;
+        _consoleBox.Select(selectionStart, selectionLength);
         UpdateThemeToggleIcon(dark);
     }
 
@@ -582,10 +589,10 @@ public sealed partial class MainForm : Form
     private void ApplySettings(SettingsForm settingsForm)
     {
         _userSettings.Language = settingsForm.SelectedLanguage;
-        _userSettings.RememberLogin = settingsForm.RememberLogin;
-        _userSettings.RememberPassword = settingsForm.RememberPassword;
         _userSettings.CreateBackup = settingsForm.CreateBackup;
-        SaveSteamCredentials();
+        if (!_saveSettings(_userSettings))
+            MessageBox.Show(this, L("SettingsSaveFailed"), "EternalDownpatcher",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
         RefreshDownpatchVersions();
         ApplyLanguage();
     }
@@ -645,11 +652,7 @@ public sealed partial class MainForm : Form
             ["GameVersion"] = "Game Version *",
             ["SteamUsername"] = "Steam Login *",
             ["SteamPassword"] = "Steam Password *",
-            ["RememberLogin"] = "Remember Steam login",
-            ["RememberPassword"] = "Remember Steam password",
-            ["RememberPasswordWarningTitle"] = "are you sure??",
-            ["RememberPasswordWarning"] = "Your Steam password will be saved on this computer, encrypted for your Windows account. Programs running under the same account may still access it.\n\nUse this only on a trusted personal computer. Turning this off and clicking OK removes the password saved by EternalDownpatcher. \n\nEnable password saving?",
-            ["CredentialSaveFailed"] = "Could not update the saved login settings. Previously saved sign-in data may still remain in the settings file.",
+            ["SettingsSaveFailed"] = "Could not save the application settings.",
             ["SteamGuardPrompt"] = "Enter the Steam Guard code from your email or authenticator app. The code will not be saved.",
             ["SteamGuardConfirm"] = "Continue",
             ["SteamGuardCancel"] = "Cancel",
@@ -779,11 +782,7 @@ public sealed partial class MainForm : Form
             ["GameVersion"] = "Версия игры *",
             ["SteamUsername"] = "Логин Steam *",
             ["SteamPassword"] = "Пароль Steam *",
-            ["RememberLogin"] = "Запомнить логин Steam",
-            ["RememberPassword"] = "Запомнить пароль Steam",
-            ["RememberPasswordWarningTitle"] = "Сохранить пароль Steam?",
-            ["RememberPasswordWarning"] = "Пароль Steam будет сохранён на этом компьютере с шифрованием для вашей учётной записи Windows. Программы, работающие под этой же учётной записью, всё ещё могут получить к нему доступ.\n\nИспользуйте это только на доверенном личном компьютере. Снятие галочки и нажатие OK удалит пароль, сохранённый EternalDownpatcher. DepotDownloader может отдельно хранить данные сессии Steam.\n\nВключить сохранение пароля?",
-            ["CredentialSaveFailed"] = "Не удалось обновить настройки входа. Ранее сохранённые данные входа могли остаться в файле настроек.",
+            ["SettingsSaveFailed"] = "Не удалось сохранить настройки приложения.",
             ["SteamGuardPrompt"] = "Введите код Steam Guard из письма или приложения-аутентификатора. Код не будет сохранён.",
             ["SteamGuardConfirm"] = "Продолжить",
             ["SteamGuardCancel"] = "Отмена",
@@ -913,11 +912,7 @@ public sealed partial class MainForm : Form
             ["GameVersion"] = "Versión del juego *",
             ["SteamUsername"] = "Usuario de Steam *",
             ["SteamPassword"] = "Contraseña de Steam *",
-            ["RememberLogin"] = "Recordar el login de Steam",
-            ["RememberPassword"] = "Recordar la contraseña de Steam",
-            ["RememberPasswordWarningTitle"] = "¿Guardar la contraseña de Steam?",
-            ["RememberPasswordWarning"] = "La contraseña de Steam se guardará en este equipo, cifrada para su cuenta de Windows. Los programas que se ejecuten con esa misma cuenta podrían acceder a ella.\n\nÚselo solo en un equipo personal de confianza. Desmarcar la casilla y pulsar OK elimina la contraseña guardada por EternalDownpatcher. DepotDownloader puede guardar datos de la sesión de Steam por separado.\n\n¿Activar el guardado de la contraseña?",
-            ["CredentialSaveFailed"] = "No se pudieron actualizar los ajustes de inicio de sesión. Los datos de acceso guardados anteriormente podrían permanecer en el archivo de configuración.",
+            ["SettingsSaveFailed"] = "No se pudo guardar la configuración de la aplicación.",
             ["SteamGuardPrompt"] = "Introduzca el código de Steam Guard del correo o de la aplicación de autenticación. El código no se guardará.",
             ["SteamGuardConfirm"] = "Continuar",
             ["SteamGuardCancel"] = "Cancelar",
