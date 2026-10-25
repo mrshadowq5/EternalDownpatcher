@@ -19,7 +19,7 @@ public sealed partial class MainForm : Form
 {
     #region State and lifecycle
 
-    internal const string AppVersion = "1.3"; // Idea by mrshadow, coded by Deepseek 
+    internal const string AppVersion = "1.3.2"; 
     private readonly UserSettings _userSettings;
     private readonly Button _themeToggleButton = new();
     private readonly Button _settingsButton = new();
