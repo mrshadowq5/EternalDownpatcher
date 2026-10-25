@@ -18,6 +18,7 @@ Release/
 Debug/
 
 appsettings.local.json
+settings.json
 *.tmp
 filelist.txt
 account.config
