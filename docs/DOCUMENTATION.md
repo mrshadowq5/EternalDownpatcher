@@ -48,7 +48,7 @@ Click Select DOOM Eternal Folder and choose the folder containing `DOOMEternalx6
 
 ### 2 · Prepare the download
 
-Enter your Steam login and password. Choose an empty Patch Files Folder outside the game folder; neither folder may be inside the other. The default output is `DOWNPATCH_FILES`. Steam credential saving is configured under Settings → Steam; Validate files is available in this mode.
+Enter your Steam login and password. Choose an empty Patch Files Folder outside the game folder; neither folder may be inside the other. The default output is `DOWNPATCH_FILES`. Steam sign-in details are used for the current session only. Validate files is available in this mode.
 
 ### 3 · Start and follow Steam prompts
 
@@ -98,9 +98,9 @@ Both Steam Login and Steam Password are required before starting either mode.
 
 Use your Steam account login, not your public profile display name. DepotDownloader performs the sign-in. When it asks for an email or authenticator code, the program opens a Steam Guard window. Mobile approval may need to be completed in the Steam app.
 
-### Saved Steam sign-in · Settings → Steam
+### Steam sign-in data
 
-Open Settings → Steam to configure Remember Steam login and Remember Steam password independently. Login saving is enabled by default; password saving is disabled by default and requires accepting a warning. Click OK to apply your choices. Credentials are saved when you confirm Settings or start a download. Turning an option off and clicking OK removes its saved copy; the fields already entered in the main window remain usable for the current session. Saved passwords are encrypted for your Windows account; programs running under that same account may still access them. DepotDownloader may retain Steam session data separately.
+EternalDownpatcher does not save or restore your Steam login or password. Enter them again after restarting the program. Old saved sign-in fields are removed from the settings file on startup; language, theme and backup preferences are retained. DepotDownloader manages its own session data separately, and this change does not revoke existing Steam sessions. You may need to complete Steam Guard again for a new download.
 
 ### Validate files
 

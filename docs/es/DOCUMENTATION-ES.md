@@ -48,7 +48,7 @@ Pulsa «Seleccionar carpeta de DOOM Eternal» y elige la carpeta con `DOOMEterna
 
 ### 2 · Prepara la descarga
 
-Introduce el login y la contraseña de Steam. Elige una «Carpeta de archivos» vacía y separada del juego; ninguna puede estar dentro de la otra. La carpeta predeterminada es `DOWNPATCH_FILES`. El guardado de acceso se configura en Configuración → Steam; «Validar archivos» está disponible en este modo.
+Introduce el login y la contraseña de Steam. Elige una «Carpeta de archivos» vacía y separada del juego; ninguna puede estar dentro de la otra. La carpeta predeterminada es `DOWNPATCH_FILES`. Los datos de acceso se usan solo durante la sesión actual. «Validar archivos» está disponible en este modo.
 
 ### 3 · Inicia y confirma el acceso
 
@@ -98,9 +98,9 @@ El login y la contraseña de Steam son obligatorios para iniciar cualquiera de l
 
 Usa el nombre de acceso de la cuenta, no el nombre público del perfil. DepotDownloader inicia la sesión. Si solicita un código por correo o del autenticador, se abre una ventana de Steam Guard. La aprobación móvil se realiza en la aplicación de Steam.
 
-### Guardar el acceso · Configuración → Steam
+### Datos de acceso de Steam
 
-En Configuración → Steam puedes elegir Recordar el login de Steam y Recordar la contraseña de Steam de forma independiente. El login se recuerda por defecto; guardar la contraseña está desactivado y requiere aceptar un aviso. Pulsa OK para aplicar las opciones. Los datos se guardan al confirmar Configuración o iniciar una descarga. Desactivar una opción y pulsar OK elimina su copia guardada; los campos ya introducidos siguen disponibles durante la sesión actual. La contraseña se cifra para tu cuenta de Windows, pero otros programas ejecutados con esa cuenta podrían acceder a ella. DepotDownloader puede conservar datos de sesión de Steam por separado.
+EternalDownpatcher no guarda ni restaura el login o la contraseña de Steam. Introdúcelos de nuevo al reiniciar el programa. Al iniciar, se eliminan los campos de acceso guardados por versiones anteriores; se conservan el idioma, el tema y la preferencia de copias de seguridad. DepotDownloader administra sus propios datos de sesión por separado; este cambio no revoca las sesiones de Steam existentes. Una nueva descarga puede requerir otra confirmación de Steam Guard.
 
 ### «Validar archivos»
 

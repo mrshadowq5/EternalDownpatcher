@@ -20,17 +20,17 @@ Steam passwords are passed to DepotDownloader through its redirected standard in
 only after it requests a password. They are not placed in command-line arguments.
 Steam Guard codes are requested in a separate dialog and are not saved.
 
-Settings → Steam contains independent **Remember Steam login** and
-**Remember Steam password** options. Login saving is enabled by default;
-password saving is disabled by default and requires confirmation of a warning. Saved passwords use Windows DPAPI with CurrentUser.
-This protects the saved file; it does not protect against malicious software
-running as the same Windows user. Turning either saving option off and
-confirming OK removes its corresponding value from EternalDownpatcher's settings. Older saved passwords without explicit opt-in are
-discarded when settings are loaded.
+EternalDownpatcher does not save or restore Steam logins or passwords. They stay
+in the current window only and must be entered again after restarting. The settings
+file stores only language, theme and backup preferences. On startup, legacy saved
+login/password fields and their remember flags are removed without decrypting them.
+If that cleanup cannot be written, startup stops with an error.
 
-DepotDownloader's -remember-password option is used only when this checkbox is
-enabled. DepotDownloader may maintain its own Steam session data; unchecking the
-box does not revoke existing Steam sessions.
+DepotDownloader's -remember-password option remains enabled for its own Steam
+session storage. Removing WinForms credential saving does not change or purge
+DepotDownloader's account/session storage or revoke existing Steam sessions. After
+credentials have been exposed, change the Steam password and sign out everywhere
+through Steam Guard. Removing a release does not invalidate downloaded copies.
 
 Please do not send or post any sensitive information, including:
 
