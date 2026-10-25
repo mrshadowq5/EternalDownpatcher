@@ -110,12 +110,15 @@ public sealed partial class MainForm : Form
         _copyLogButton.Text = "Copy Log";
         _copyLogButton.Click += CopyLogButton_Click;
         _consoleBox.SetBounds(12, 287, 696, 125);
+        _consoleBox.Multiline = true;
         _consoleBox.ReadOnly = true;
+        _consoleBox.WordWrap = true;
+        _consoleBox.MaxLength = int.MaxValue;
         _consoleBox.BackColor = Color.Black;
         _consoleBox.ForeColor = Color.White;
         _consoleBox.Font = new Font("Consolas", 9.5F);
         _consoleBox.BorderStyle = BorderStyle.FixedSingle;
-        _consoleBox.ScrollBars = RichTextBoxScrollBars.Vertical;
+        _consoleBox.ScrollBars = ScrollBars.Vertical;
         _restoreProgressBar.SetBounds(12, 421, 318, 24);
         _restoreProgressBar.Style = ProgressBarStyle.Marquee;
         _restoreProgressBar.MarqueeAnimationSpeed = 30;
@@ -353,13 +356,6 @@ public sealed partial class MainForm : Form
     {
         _isDarkTheme = dark;
         ApplyThemePalette(GetThemePalette(dark), dark);
-        // RichTextBox character backgrounds are separate from the control background.
-        int selectionStart = _consoleBox.SelectionStart;
-        int selectionLength = _consoleBox.SelectionLength;
-        _consoleBox.SelectAll();
-        _consoleBox.SelectionBackColor = _consoleBox.BackColor;
-        _consoleBox.SelectionColor = _consoleBox.ForeColor;
-        _consoleBox.Select(selectionStart, selectionLength);
         UpdateThemeToggleIcon(dark);
     }
 
@@ -382,16 +378,11 @@ public sealed partial class MainForm : Form
 
     private void ApplyThemeToControl(Control control, ThemePalette palette, bool dark)
     {
-        if (control is RichTextBox richTextBox)
+        if (control is TextBox textBox)
         {
-            richTextBox.BackColor = palette.LogBack;
-            richTextBox.ForeColor = palette.LogFore;
-            richTextBox.BorderStyle = BorderStyle.FixedSingle;
-        }
-        else if (control is TextBox textBox)
-        {
-            textBox.BackColor = palette.InputBack;
-            textBox.ForeColor = palette.InputFore;
+            bool isLog = ReferenceEquals(textBox, _consoleBox);
+            textBox.BackColor = isLog ? palette.LogBack : palette.InputBack;
+            textBox.ForeColor = isLog ? palette.LogFore : palette.InputFore;
             textBox.BorderStyle = BorderStyle.FixedSingle;
         }
         else if (control is ComboBox comboBox)

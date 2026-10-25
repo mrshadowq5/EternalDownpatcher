@@ -47,7 +47,7 @@ public sealed partial class MainForm : Form
     private readonly Func<UserSettings, bool> _saveSettings;
     private readonly Label _gameFolderStatusLabel = new();
     private readonly Label _requiredFieldsLabel = new();
-    private readonly RichTextBox _consoleBox = new();
+    private readonly TextBox _consoleBox = new();
     private readonly Label _folderLabel = new();
     private readonly Button _openOutputFolderButton = new();
     private readonly Button _restoreBackupButton = new();
@@ -199,10 +199,7 @@ public sealed partial class MainForm : Form
     private void WriteLog(string message)
     {
         string timestamp = DateTime.Now.ToString("HH:mm:ss");
-        _consoleBox.Select(_consoleBox.TextLength, 0);
-        _consoleBox.SelectionBackColor = _consoleBox.BackColor;
-        _consoleBox.SelectionColor = _consoleBox.ForeColor;
-        _consoleBox.SelectedText = $"[{timestamp}] > {message}{Environment.NewLine}";
+        _consoleBox.AppendText($"[{timestamp}] > {message}{Environment.NewLine}");
         _consoleBox.SelectionStart = _consoleBox.TextLength;
         _consoleBox.ScrollToCaret();
     }
