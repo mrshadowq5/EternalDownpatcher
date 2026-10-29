@@ -38,4 +38,4 @@ To publish a Windows executable:
 dotnet publish .\DEDownpatcher.WinForms.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -o .\bin\publish-single
 ```
 
-Publish into a new, empty output folder. Distribute the complete publish output, including `assets` and `data`; the executable contains the .NET runtime libraries. Do not package working folders, `settings.json`, `account.config`, or login logs.
+Do not package working folders, `settings.json`, `account.config`, or login logs.
