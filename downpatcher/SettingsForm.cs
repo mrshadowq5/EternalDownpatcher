@@ -402,9 +402,9 @@ public sealed class SettingsForm : Form
         Dictionary<string, string> ru = new()
         {
             ["Settings"] = "Настройки",
-            ["Downpatch"] = "Даунпатч",
-            ["DownpatchSettings"] = "Даунпатч установленной игры",
-            ["BackupSettingsNote"] = "Для режима «Даунпатч». Прерванную загрузку нужно продолжить до той же версии(!!!)", //а я хочу в откат
+            ["Downpatch"] = "Откат",
+            ["DownpatchSettings"] = "Откат установленной игры",
+            ["BackupSettingsNote"] = "Для режима «Откат».\nПрерванную загрузку нужно продолжить до той же версии", //а я хочу в откат
             ["Language"] = "Язык",
             ["Info"] = "Инфо",
             ["Cancel"] = "Отмена",
@@ -413,7 +413,7 @@ public sealed class SettingsForm : Form
             ["DepotDownloaderVersion"] = "Версия DepotDownloader: 1.2",
             ["HelpText"] = "Если у вас возникла проблема или вы столкнулись с багом, напишите в Modern DOOM Speedrunning Discord или пинганите/напишите мне в лс.",
             ["Contact"] = "Связаться со мной: mr.shadowq5 в Дискорде. Меня нет в МАКС.",
-            ["MadeBy"] = "Шел второй день без игры в роблокс, у меня начались ломки."
+            ["MadeBy"] = "Шел второй день без игры в роблокс. у меня начались ломки."
         };
 
         Dictionary<string, string> es = new()
