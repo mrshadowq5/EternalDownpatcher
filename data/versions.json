@@ -2,7 +2,7 @@
   "versions": [
     {
       "name": "1.0",
-      "displayName": "1.0 (Release)",
+      "displayName": "1.0 (release)",
       "size": "469277696",
       "manifestIds": [
         "4641765937586464647",
@@ -17,6 +17,7 @@
     },
     {
       "name": "1.1",
+      "displayName": "1.1",
       "size": "451225088",
       "manifestIds": [
         "3892274199857968095",
@@ -344,7 +345,7 @@
     },
     {
       "name": "6.66.1",
-      "displayName": "6.66 Rev 1",
+      "displayName": "6.66r1",
       "size": "433705472",
       "manifestIds": [
         "1491890520338337958",
@@ -359,7 +360,7 @@
     },
     {
       "name": "6.66.1.1",
-      "displayName": "6.66 Rev 1.1",
+      "displayName": "6.66r1.1",
       "size": "430909440",
       "manifestIds": [
         "4460772124833779310",
@@ -374,7 +375,7 @@
     },
     {
       "name": "6.66.2",
-      "displayName": "6.66 Rev 2",
+      "displayName": "6.66r2",
       "size": "465590272",
       "manifestIds": [
         "6157149951972263437",
@@ -389,7 +390,7 @@
     },
     {
       "name": "6.66.2.2",
-      "displayName": "6.66 Rev 2.2",
+      "displayName": "6.66r2.2",
       "size": "77134848",
       "manifestIds": [
         "1009719778708626290",
@@ -404,7 +405,7 @@
     },
     {
       "name": "6.66.3",
-      "displayName": "6.66 Rev 3",
+      "displayName": "6.66r3",
       "size": "77312744",
       "manifestIds": [
         "3719882324993485765",
@@ -419,7 +420,7 @@
     },
     {
       "name": "6.66.4",
-      "displayName": "6.66 Rev 3.1",
+      "displayName": "6.66r3.1",
       "size": "77178808",
       "manifestIds": [
         "3461074302571259277",
@@ -433,8 +434,8 @@
       ]
     },
     {
-      "name": "Build 24695697",
-      "displayName": "6.66 Rev 3.2 (Build 24695697)",
+      "name": "build 24695697",
+      "displayName": "6.66r3.2    (build-24695697)",
       "size": "77207984",
       "manifestIds": [
         "2367662674907098364",
@@ -463,8 +464,8 @@
       ]
     },
     {
-      "name": "Build 24785517",
-      "displayName": "6.66 Rev 3.2 (Build 24785517)",
+      "name": "build 24785517",
+      "displayName": "6.66r3.2    (build-24785517)",
       "size": "77207984",
       "manifestIds": [
         "2367662674907098364",
@@ -481,8 +482,8 @@
       "releasedUtc": "2026-09-03"
     },
     {
-      "name": "Build 25216728",
-      "displayName": "6.66 Rev 3.2 (Build 25216728)",
+      "name": "build 25216728",
+      "displayName": "6.66r3.2    (build-25216728)        (latest)",
       "size": "77207984",
       "manifestIds": [
         "2367662674907098364",
