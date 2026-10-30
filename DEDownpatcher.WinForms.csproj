@@ -11,7 +11,7 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <DefaultItemExcludes>$(DefaultItemExcludes);DOWNPATCH_FILES\**</DefaultItemExcludes>
+    <DefaultItemExcludes>$(DefaultItemExcludes);DOWNPATCH_FILES\**;checks\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -209,7 +210,7 @@ public sealed partial class MainForm : Form
             DownpatchVersion? pending = FindPendingVersion(_doomRootFolder!);
             if (pending is not null && (!directUpdate || !pending.ManifestIds.SequenceEqual(selectedVersion.ManifestIds)))
             {
-                ShowErrorKey("PendingDirectError", pending.Name);
+                ShowErrorKey("PendingDirectError", pending.DisplayName);
                 return;
             }
             if (_installedVersion is null && !directUpdate)
@@ -322,7 +323,7 @@ public sealed partial class MainForm : Form
         try
         {
             WriteLog($"Mode: {(downloadAllFiles ? "Download All Files" : "Patch existing install")}");
-            WriteLog($"Selected version: {selectedVersion.Name}");
+            WriteLog($"Selected version: {selectedVersion.DisplayName}");
             WriteLog($"DepotDownloader: {depotDownloaderPath}");
             if (downloadAllFiles)
             {
@@ -524,10 +525,10 @@ public sealed partial class MainForm : Form
             return;
         }
 
-        _gameFolderStatusLabel.Text = string.Format(L("RootSelected"), _installedVersion.Name);
+        _gameFolderStatusLabel.Text = string.Format(L("RootSelected"), _installedVersion.DisplayName);
         ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
         WriteLog($"DOOM Eternal folder: {selectedPath}");
-        WriteLog($"Installed DOOM Eternal version: {_installedVersion.Name}");
+        WriteLog($"Installed DOOM Eternal version: {_installedVersion.DisplayName}");
         RefreshDownpatchVersions();
         ApplyLanguage();
     }
@@ -592,7 +593,7 @@ public sealed partial class MainForm : Form
             return "This will download a full standalone copy of the selected DOOM Eternal version.\n\nIt will not modify your selected Steam install.\n\nContinue?";
         if (!createBackup)
         {
-            return L("ManifestPreparationNotice") + "\n\n" + LF("NoBackupConfirmation", version.Name, _doomRootFolder ?? "");
+            return L("ManifestPreparationNotice") + "\n\n" + LF("NoBackupConfirmation", version.DisplayName, _doomRootFolder ?? "");
         }
         return L("ManifestPreparationNotice") + "\n\n" + L("BackupPatchConfirmation");
     }
@@ -642,7 +643,7 @@ public sealed partial class MainForm : Form
             }
             else if (_installedVersion is not null)
             {
-                _gameFolderStatusLabel.Text = string.Format(L("RootSelected"), _installedVersion.Name);
+                _gameFolderStatusLabel.Text = string.Format(L("RootSelected"), _installedVersion.DisplayName);
             }
 
             ApplyStatusLabelColors(GetThemePalette(_isDarkTheme));
@@ -703,8 +704,15 @@ public sealed partial class MainForm : Form
             var lists = (incoming.VerifiedRollbackFileLists ?? []).ToList();
             foreach (VerifiedRollbackFileList list in known?.VerifiedRollbackFileLists ?? [])
                 if (!lists.Any(existing => existing.SourceManifestIds.SequenceEqual(list.SourceManifestIds))) lists.Add(list);
-            versions[index] = incoming with { VerifiedRollbackFileLists = lists.ToArray() };
+            versions[index] = incoming with
+            {
+                // Older catalogs have no labels; keep the label for this exact snapshot.
+                DisplayLabel = incoming.DisplayLabel ?? known?.DisplayLabel,
+                VerifiedRollbackFileLists = lists.ToArray()
+            };
         }
+        if (versions.Select(version => version.DisplayName).Distinct(StringComparer.OrdinalIgnoreCase).Count() != versions.Count)
+            throw new InvalidDataException("Duplicate version display names.");
         _versionDataFolder = Path.GetFullPath(folder);
         _versions.Clear();
         _versions.AddRange(versions);
@@ -774,7 +782,9 @@ public sealed partial class MainForm : Form
             return;
         }
 
-        int defaultIndex = _versionComboBox.Items.IndexOf("1.1"); //default downpatch version
+        DownpatchVersion? defaultVersion = _versionComboBox.Items.Cast<DownpatchVersion>()
+            .FirstOrDefault(version => version.Name == "1.1");
+        int defaultIndex = defaultVersion is null ? -1 : _versionComboBox.Items.IndexOf(defaultVersion);
         _versionComboBox.SelectedIndex = defaultIndex >= 0 ? defaultIndex : 0;
     }
 
@@ -843,6 +853,15 @@ public sealed partial class MainForm : Form
             }
 
             string size = GetStringProperty(element, "size") ?? "";
+            string? displayName = null;
+            if (element.TryGetProperty("displayName", out JsonElement label))
+            {
+                if (label.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(label.GetString()))
+                    throw new InvalidDataException("Invalid version display name.");
+                displayName = label.GetString()!.Trim();
+                if (displayName.Length > 80 || displayName.Any(char.IsControl))
+                    throw new InvalidDataException("Invalid version display name.");
+            }
             DetectionFile[] detectionFiles = [];
             if (element.TryGetProperty("detectionFiles", out JsonElement detection))
             {
@@ -889,7 +908,7 @@ public sealed partial class MainForm : Form
                         throw new InvalidDataException("Verified rollback must include the game executable.");
                 }
             }
-            versions.Add(new DownpatchVersion(name.Trim(), size.Trim(), manifestIds.ToArray(),
+            versions.Add(new DownpatchVersion(name.Trim(), displayName, size.Trim(), manifestIds.ToArray(),
                 element.TryGetProperty("requiresCompleteFileList", out JsonElement completeFileList) &&
                 completeFileList.ValueKind == JsonValueKind.True, buildId, detectionFiles, verifiedLists));
         }
@@ -902,11 +921,13 @@ public sealed partial class MainForm : Form
         if (strict)
         {
             HashSet<string> names = new(StringComparer.OrdinalIgnoreCase);
+            HashSet<string> displayNames = new(StringComparer.OrdinalIgnoreCase);
             if (versions.Count != versionsElement.GetArrayLength())
                 throw new InvalidDataException("versions.json contains incomplete version entries.");
             foreach (DownpatchVersion version in versions)
             {
                 if (!Regex.IsMatch(version.Name, @"\A(?:[0-9]+(?:\.[0-9]+)*|Build [0-9]+)\z") || !names.Add(version.Name) ||
+                    !displayNames.Add(version.DisplayName) ||
                     !long.TryParse(version.Size, out long size) || size <= 0 ||
                     version.ManifestIds.Any(id => !ulong.TryParse(id, out ulong value) || value == 0))
                     throw new InvalidDataException($"Invalid version metadata: {version.Name}");
@@ -914,6 +935,35 @@ public sealed partial class MainForm : Form
         }
 
         return versions;
+    }
+
+    internal static void PrepareVersionDataUpdate(string incomingFolder, string previousFolder)
+    {
+        string incomingPath = Path.Combine(incomingFolder, "versions.json");
+        List<DownpatchVersion> incoming = ReadVersionsJson(incomingPath, strict: true);
+        List<DownpatchVersion> previous = ReadVersionsJson(Path.Combine(previousFolder, "versions.json"), strict: true);
+        HashSet<string> snapshots = incoming.Select(version => string.Join(",", version.ManifestIds)).ToHashSet(StringComparer.Ordinal);
+        if (previous.Any(version => !snapshots.Contains(string.Join(",", version.ManifestIds))))
+            throw new InvalidDataException("The downloaded catalog omits previously cached versions.");
+
+        // Preserve labels omitted by a legacy catalog on disk as well as in memory,
+        // including labels for versions that are not bundled with this executable.
+        JsonNode document = JsonNode.Parse(File.ReadAllText(incomingPath))!;
+        JsonArray entries = document as JsonArray ?? document["versions"]!.AsArray();
+        bool changed = false;
+        for (int index = 0; index < incoming.Count; index++)
+        {
+            if (incoming[index].DisplayLabel is not null) continue;
+            DownpatchVersion? known = previous.FirstOrDefault(version => version.ManifestIds.SequenceEqual(incoming[index].ManifestIds));
+            if (known?.DisplayLabel is null) continue;
+            entries[index]!["displayName"] = known.DisplayLabel;
+            changed = true;
+        }
+        if (changed)
+        {
+            File.WriteAllText(incomingPath, document.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            ValidateVersionDataFolder(incomingFolder);
+        }
     }
 
     internal static void ValidateVersionDataFolder(string folder)
@@ -952,12 +1002,12 @@ public sealed partial class MainForm : Form
 
     private void RefreshDownpatchVersions()
     {
-        string? selectedBefore = _versionComboBox.SelectedItem?.ToString();
+        string? selectedBefore = GetSelectedVersion()?.Name;
         _versionComboBox.Items.Clear();
         DownpatchVersion? pending = _doomRootFolder is null ? null : FindPendingVersion(_doomRootFolder);
         if (!_downloadAllFilesRadioButton.Checked && pending is not null)
         {
-            _versionComboBox.Items.Add(pending.Name);
+            _versionComboBox.Items.Add(pending);
             _versionComboBox.SelectedIndex = 0;
             return;
         }
@@ -965,17 +1015,10 @@ public sealed partial class MainForm : Form
         {
             foreach (DownpatchVersion version in _versions)
             {
-                _versionComboBox.Items.Add(version.Name);
+                _versionComboBox.Items.Add(version);
             }
 
-            if (!string.IsNullOrWhiteSpace(selectedBefore) && _versionComboBox.Items.Contains(selectedBefore))
-            {
-                _versionComboBox.SelectedItem = selectedBefore;
-            }
-            else
-            {
-                EnsureDefaultVersionSelection();
-            }
+            RestoreVersionSelection(selectedBefore);
 
             return;
         }
@@ -990,25 +1033,25 @@ public sealed partial class MainForm : Form
 
         for (int i = 0; i < installedIndex; i++)
         {
-            _versionComboBox.Items.Add(_versions[i].Name);
+            _versionComboBox.Items.Add(_versions[i]);
         }
 
-        if (!string.IsNullOrWhiteSpace(selectedBefore) && _versionComboBox.Items.Contains(selectedBefore))
-        {
-            _versionComboBox.SelectedItem = selectedBefore;
-        }
-        else
-        {
-            EnsureDefaultVersionSelection();
-        }
+        RestoreVersionSelection(selectedBefore);
 
-        WriteLog($"Detected installed version: {_installedVersion.Name}");
+        WriteLog($"Detected installed version: {_installedVersion.DisplayName}");
         WriteLog($"Available downpatch versions: {_versionComboBox.Items.Count}");
     }
 
     private int GetVersionIndex(string versionName)
     {
         return _versions.FindIndex(version => string.Equals(version.Name, versionName, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private void RestoreVersionSelection(string? name)
+    {
+        _versionComboBox.SelectedItem = _versionComboBox.Items.Cast<DownpatchVersion>()
+            .FirstOrDefault(version => string.Equals(version.Name, name, StringComparison.OrdinalIgnoreCase));
+        EnsureDefaultVersionSelection();
     }
 
     private DownpatchVersion? DetectInstalledVersion(string doomRootFolder)
@@ -1124,7 +1167,7 @@ public sealed partial class MainForm : Form
 
     private void OfferFullDownloadForUnknownVersion()
     {
-        string message = LF("UnknownVersionRecovery", _installedExecutableSize?.ToString() ?? "?", _versions.LastOrDefault()?.Name ?? "?");
+        string message = LF("UnknownVersionRecovery", _installedExecutableSize?.ToString() ?? "?", _versions.LastOrDefault()?.DisplayName ?? "?");
         WriteLog(message.Replace("\n", " "));
         if (MessageBox.Show(this, message, "EternalDownpatcher", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) == DialogResult.Yes)
             _downloadAllFilesRadioButton.Checked = true;
@@ -1138,7 +1181,7 @@ public sealed partial class MainForm : Form
         if (!IsDirectUpdate && installedIndex < 0) throw new InvalidOperationException(L("InstalledVersionNotDetected"));
         DownpatchVersion? pending = _doomRootFolder is null ? null : FindPendingVersion(_doomRootFolder);
         if (pending is not null && (!IsDirectUpdate || !pending.ManifestIds.SequenceEqual(targetVersion.ManifestIds)))
-            throw new InvalidOperationException(LF("PendingDirectError", pending.Name));
+            throw new InvalidOperationException(LF("PendingDirectError", pending.DisplayName));
         if (pending is null && installedIndex >= 0 && targetIndex >= installedIndex)
             throw new InvalidOperationException(L("TargetMustBeOlder"));
         if (RequiresCompleteFileList(targetVersion))
@@ -1161,8 +1204,8 @@ public sealed partial class MainForm : Form
 
         HashSet<string> aggregatedFiles = new(StringComparer.OrdinalIgnoreCase);
         List<string> includedFileLists = [];
-        WriteLog($"Target version: {targetVersion.Name}");
-        WriteLog($"Installed version: {_installedVersion!.Name}");
+        WriteLog($"Target version: {targetVersion.DisplayName}");
+        WriteLog($"Installed version: {_installedVersion!.DisplayName}");
         if (string.Equals(targetVersion.Name, "1.0", StringComparison.OrdinalIgnoreCase) && FindRawFileListPath("1.1.0")is not null)
         {
             includedFileLists.Add("1.1.0");
@@ -1323,21 +1366,20 @@ public sealed partial class MainForm : Form
 
     private DownpatchVersion? GetSelectedVersion()
     {
-        string? selectedName = _versionComboBox.SelectedItem?.ToString();
-        if (string.IsNullOrWhiteSpace(selectedName))
-        {
-            return null;
-        }
-
-        return _versions.FirstOrDefault(version => string.Equals(version.Name, selectedName, StringComparison.OrdinalIgnoreCase));
+        return _versionComboBox.SelectedItem as DownpatchVersion;
     }
 
     private sealed record DetectionFile(string Path, string Size, string Sha1);
     private sealed record ReceiptFile(string Path, long Size, string Sha256);
     private sealed record VersionReceipt(int FormatVersion, string[] ManifestIds, ReceiptFile[] Files);
     private sealed record VerifiedRollbackFileList(string[] SourceManifestIds, string[] Files);
-    private sealed record DownpatchVersion(string Name, string Size, string[] ManifestIds, bool RequiresCompleteFileList = false,
-        string? BuildId = null, DetectionFile[]? DetectionFiles = null, VerifiedRollbackFileList[]? VerifiedRollbackFileLists = null);
+    // Name remains the catalog/filelist key; DisplayName is presentation only.
+    private sealed record DownpatchVersion(string Name, string? DisplayLabel, string Size, string[] ManifestIds, bool RequiresCompleteFileList = false,
+        string? BuildId = null, DetectionFile[]? DetectionFiles = null, VerifiedRollbackFileList[]? VerifiedRollbackFileLists = null)
+    {
+        public string DisplayName => DisplayLabel ?? Name;
+        public override string ToString() => DisplayName;
+    }
 
     #endregion
 
@@ -1499,8 +1541,13 @@ internal static class VersionDataCache
             cancellationToken.ThrowIfCancellationRequested();
             MainForm.ValidateVersionDataFolder(staging);
             string? current = FindCurrentFolder(cacheRoot);
-            if (current is not null && Fingerprint(current).SequenceEqual(Fingerprint(staging)))
-                return current;
+            if (current is not null)
+            {
+                // Validate against the saved catalog before publishing a new cache pointer.
+                MainForm.PrepareVersionDataUpdate(staging, current);
+                if (Fingerprint(current).SequenceEqual(Fingerprint(staging)))
+                    return current;
+            }
 
             string name = "snapshot-" + Guid.NewGuid().ToString("N");
             string snapshot = Path.Combine(cacheRoot, name);

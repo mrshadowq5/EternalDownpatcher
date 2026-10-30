@@ -57,6 +57,9 @@ public sealed partial class MainForm : Form
         _passwordLabel.SetBounds(330, 92, 160, 20);
         _versionComboBox.SetBounds(12, 114, 140, 25);
         _versionComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+        _versionComboBox.DropDownWidth = 340;
+        _versionComboBox.SelectedIndexChanged += (_, _) =>
+            _versionToolTip.SetToolTip(_versionComboBox, GetSelectedVersion()?.DisplayName ?? "");
         _steamUsernameTextBox.SetBounds(160, 114, 160, 25);
         _steamPasswordTextBox.SetBounds(330, 114, 160, 25);
         _steamPasswordTextBox.UseSystemPasswordChar = true;
@@ -611,7 +614,7 @@ public sealed partial class MainForm : Form
         }
         else if (_doomRootFolder is not null && FindPendingVersion(_doomRootFolder) is DownpatchVersion pendingVersion)
         {
-            _gameFolderStatusLabel.Text = LF("PendingDirectStatus", pendingVersion.Name);
+            _gameFolderStatusLabel.Text = LF("PendingDirectStatus", pendingVersion.DisplayName);
         }
         else if (_doomRootFolder is null)
         {
@@ -619,7 +622,7 @@ public sealed partial class MainForm : Form
         }
         else if (_installedVersion is not null)
         {
-            _gameFolderStatusLabel.Text = string.Format(T(language, "RootSelected"), _installedVersion.Name);
+            _gameFolderStatusLabel.Text = string.Format(T(language, "RootSelected"), _installedVersion.DisplayName);
         }
         else
         {

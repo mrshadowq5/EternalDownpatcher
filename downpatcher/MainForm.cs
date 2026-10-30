@@ -30,6 +30,7 @@ public sealed partial class MainForm : Form
     private readonly Label _passwordLabel = new();
     private readonly Label _consoleLabel = new();
     private readonly ComboBox _versionComboBox = new();
+    private readonly ToolTip _versionToolTip = new();
     private readonly TextBox _steamUsernameTextBox = new();
     private readonly TextBox _steamPasswordTextBox = new();
     private readonly TextBox _downpatchFolderTextBox = new();
@@ -139,6 +140,7 @@ public sealed partial class MainForm : Form
             CancelDepotDownloaderUpdateCheck();
             _depotUpdateTimer.Dispose();
             DisposeButtonIcons();
+            _versionToolTip.Dispose();
             CancellationTokenSource? versionCancellation = _versionDataCancellation;
             _versionDataCancellation = null;
             // The async updater owns and disposes this source when its request ends.
