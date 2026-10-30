@@ -19,7 +19,7 @@ public sealed partial class MainForm : Form
 {
     #region State and lifecycle
 
-    internal const string AppVersion = "1.3.2"; 
+    internal const string AppVersion = "1.3.3"; //align game versions and fix some shit
     private readonly UserSettings _userSettings;
     private readonly Button _themeToggleButton = new();
     private readonly Button _settingsButton = new();

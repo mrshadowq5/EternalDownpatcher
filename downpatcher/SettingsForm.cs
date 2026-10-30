@@ -262,7 +262,7 @@ public sealed class SettingsForm : Form
 
         Label versionLabel = new()
         {
-            Text = $"EternalDownpatcher {MainForm.AppVersion} (the best version!)",
+            Text = $"EternalDownpatcher {MainForm.AppVersion} (the worst version?)",
             AutoSize = false,
             ForeColor = _text,
             BackColor = _panel,
