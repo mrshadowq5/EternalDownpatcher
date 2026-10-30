@@ -14,7 +14,7 @@ Also, EternalDownpatcher downloads [DepotDownloader](https://github.com/SteamRE/
 
 ## Important
 
-***You must own [DOOM Eternal](https://store.steampowered.com/app/782330/DOOM_Eternal/) on Steam.***
+You **must own** [DOOM Eternal](https://store.steampowered.com/app/782330/DOOM_Eternal/) on **Steam**.
 
 ## Requirements
 
