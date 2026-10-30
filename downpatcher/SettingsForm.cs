@@ -402,9 +402,9 @@ public sealed class SettingsForm : Form
         Dictionary<string, string> ru = new()
         {
             ["Settings"] = "Настройки",
-            ["Downpatch"] = "Откат",
-            ["DownpatchSettings"] = "Откат установленной игры",
-            ["BackupSettingsNote"] = "Для режима «Откат».\nПрерванную загрузку нужно продолжить до той же версии", //а я хочу в откат
+            ["Downpatch"] = "Даунпатч",
+            ["DownpatchSettings"] = "Даунпатч установленной игры",
+            ["BackupSettingsNote"] = "Для режима «Даунпатч».\nПрерванную загрузку нужно продолжить до той же версии", //а я хочу в откат
             ["Language"] = "Язык",
             ["Info"] = "Инфо",
             ["Cancel"] = "Отмена",
