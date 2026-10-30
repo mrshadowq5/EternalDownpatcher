@@ -387,7 +387,7 @@ public sealed class SettingsForm : Form
             ["Settings"] = "Settings",
             ["Downpatch"] = "Downpatch",
             ["DownpatchSettings"] = "Installed game downpatching",
-            ["BackupSettingsNote"] = "Applies to Downpatch mode. Enabled: keep replaced files for restoration. Disabled: update the game directly, reusing existing data. An interrupted download must be resumed to the same version.",
+            ["BackupSettingsNote"] = "Applies to Downpatch mode.\nAn interrupted download must be resumed to the same version.",
             ["Language"] = "Language",
             ["Info"] = "Info",
             ["Cancel"] = "Cancel",
@@ -402,9 +402,9 @@ public sealed class SettingsForm : Form
         Dictionary<string, string> ru = new()
         {
             ["Settings"] = "Настройки",
-            ["Downpatch"] = "Откат",
-            ["DownpatchSettings"] = "Откат установленной игры",
-            ["BackupSettingsNote"] = "Для режима «Откат». С галочкой заменяемые файлы сохраняются для восстановления. Без галочки игра обновляется напрямую с использованием имеющихся данных. Прерванную загрузку нужно продолжить до той же версии.",
+            ["Downpatch"] = "Даунпатч",
+            ["DownpatchSettings"] = "Даунпатч установленной игры",
+            ["BackupSettingsNote"] = "Для режима «Даунпатч». Прерванную загрузку нужно продолжить до той же версии(!!!)", //а я хочу в откат
             ["Language"] = "Язык",
             ["Info"] = "Инфо",
             ["Cancel"] = "Отмена",
@@ -421,7 +421,7 @@ public sealed class SettingsForm : Form
             ["Settings"] = "Configuración",
             ["Downpatch"] = "Revertir",
             ["DownpatchSettings"] = "Revertir el juego instalado",
-            ["BackupSettingsNote"] = "Se aplica al modo de reversión. Activado: guarda los archivos reemplazados para restaurarlos. Desactivado: actualiza el juego directamente reutilizando datos existentes. Si se interrumpe la descarga, reanúdala con la misma versión.",
+            ["BackupSettingsNote"] = "Se aplica al modo de reversión. Si se interrumpe la descarga, reanúdala con la misma versión.",
             ["Language"] = "Idioma",
             ["Info"] = "Info",
             ["Cancel"] = "Cancelar",
